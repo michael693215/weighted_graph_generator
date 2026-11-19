@@ -1,3 +1,5 @@
+// g++ -o exec main.cpp graph.cpp
+// uncomment tests to run them
 #include "graph.hpp"
 #include <cstdint>
 #include <iostream>
