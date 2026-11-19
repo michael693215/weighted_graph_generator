@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "graph.hpp"
 #include "rng.hpp"
 
@@ -5,7 +6,7 @@ Graph::Properties::Properties(std::int64_t _n, std::int64_t _w_max, int _k, floa
 : size(_n * _n), w_max(_w_max), k(_k), obstacle_d(_obstacle_d), seed(_seed), w_min(_w_min) {}
 
 Graph::Graph(std::int64_t _n, std::int64_t _w_max, int _k, float _obstacle_d, std::uint64_t _seed, std::int64_t _w_min)
-: p(_n, _w_max, _k, _obstacle_d, _seed, _w_min) {
+: p(_n, _w_max, _k, std::clamp(_obstacle_d, 0.f, 1.f), _seed, _w_min) {
     // minimum weight < 1 makes no sense if 0 is an obstacle
     if (p.w_min <= 0) {
         p.w_min = 1;
