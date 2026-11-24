@@ -22,34 +22,46 @@ Default run (`500x500` grid, weights `1..100`, `20%` obstacles, seed `42`):
 Custom parameters (`./driver <n> <w_max> <k> <obstacle_density> <seed>`):
 
 ```bash
-./driver 1000 100 0 0.25 42
+./driver 2000 100 0 0.25 42
 
 ```
 
 ### 3. Set Up Python Virtual Environment (One-Time)
-
-Create and activate `.venv`, then install dependencies from `requirements.txt`:
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 
 ```
 
-*(Whenever you open a new terminal session later, re-activate it with `source .venv/bin/activate`.)*
+*(Re-activate in new terminal sessions with `source .venv/bin/activate`.)*
 
-### 4. Export CSVs & Generate Visualization
-
-Run with `--export` (smaller grids like `60x60` render crisp flow arrows) and generate `flood_field.png`:
+### 4. Generate Static Flood Field Image (`flood_field.png`)
 
 ```bash
 ./driver 60 100 0 0.20 42 --export && python visualize.py
 
 ```
 
-Optional visualization flags:
+### 5. Generate Propagation Animation (`flood_animation.gif` or `.mp4`)
+
+Export the nanosecond settle trace with `--trace` and render the animation:
 
 ```bash
-python visualize.py --out custom_name.png --no-arrows
+./driver 60 100 0 0.20 42 --trace && python animate.py
+
+```
+
+Render as an `.mp4` or adjust frame count / FPS:
+
+```bash
+python animate.py --out flood_animation.mp4 --frames 150 --fps 30
+
+```
+
+Side-by-side comparison (once `trace_parallel.csv` is generated):
+
+```bash
+python animate.py --parallel trace_parallel.csv --out comparison.mp4
 
 ```
 
@@ -57,18 +69,9 @@ python visualize.py --out custom_name.png --no-arrows
 
 ## Original Graph Generator Tests
 
-To run the standalone grid generator tests in `main.cpp`, uncomment a test block in `main.cpp` and run:
+Uncomment a test block in `main.cpp` and run:
 
 ```bash
 g++ -std=c++17 -O2 -o exec main.cpp graph.cpp && ./exec
 
 ```
-
-## Project Layout
-
-* `graph.hpp` / `graph.cpp` — Deterministic 2D weighted grid generator with obstacle masking.
-* `rng.hpp` — Fast 64-bit Mersenne Twister wrapper.
-* `serial_dijkstra.hpp` / `serial_dijkstra.cpp` — Serial Dijkstra flood field baseline.
-* `driver.cpp` — Benchmark runner and CSV exporter.
-* `visualize.py` — Generates `flood_field.png` from exported CSVs.
-* `requirements.txt` — Python dependencies for visualization.
