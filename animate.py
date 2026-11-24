@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import argparse
 import os
+from typing import Optional
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -54,7 +57,7 @@ def generate_animation(
     weights_path: str,
     dist_path: str,
     serial_trace_path: str,
-    parallel_trace_path: str | None,
+    parallel_trace_path: Optional[str],
     output_path: str,
     frames: int,
     fps: int,
@@ -186,6 +189,4 @@ if __name__ == "__main__":
         parallel_trace_path=args.parallel,
         output_path=args.out,
         frames=args.frames,
-        fps=args.fps,
-        hold_seconds=args.hold,
-    )
+        fps=args.
