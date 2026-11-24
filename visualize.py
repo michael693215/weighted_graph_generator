@@ -1,7 +1,6 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 
 
 def load_data(weights_path: str, dist_path: str, dir_path: str):
@@ -25,10 +24,10 @@ def render_flood_field(
     target_coords = np.argwhere(dist == 0)
     target_rc = target_coords[0] if len(target_coords) > 0 else None
 
-    # --- Panel 1: Input Terrain Weights ---
+    # --- Panel 1: Input Terrain Weights (Green -> Yellow -> Red, Obstacles Black) ---
     terrain_masked = np.ma.masked_where(weights == 0, weights)
-    cmap_terrain = plt.cm.YlGnBu_r.copy()
-    cmap_terrain.set_bad(color="#111111")  # Obstacles in near-black
+    cmap_terrain = plt.cm.RdYlGn_r.copy()
+    cmap_terrain.set_bad(color="#111111")
 
     im_terrain = ax_terrain.imshow(terrain_masked, cmap=cmap_terrain, origin="upper")
     ax_terrain.set_title(f"Terrain Traversal Costs ({n}x{n})")
@@ -37,12 +36,11 @@ def render_flood_field(
     fig.colorbar(im_terrain, ax=ax_terrain, fraction=0.046, pad=0.04, label="Cell Entry Cost")
 
     # --- Panel 2: Output Flood Field ---
-    # Mask obstacles (weights == 0) and unreachable cells (dist < 0)
     unreachable_mask = (weights == 0) | (dist < 0)
     dist_masked = np.ma.masked_where(unreachable_mask, dist)
 
     cmap_flood = plt.cm.plasma_r.copy()
-    cmap_flood.set_bad(color="#111111")  # Obstacles / unreachable in near-black
+    cmap_flood.set_bad(color="#111111")
 
     im_flood = ax_flood.imshow(dist_masked, cmap=cmap_flood, origin="upper")
     ax_flood.set_title("Flood Field (Cost & Flow to Target)")
@@ -56,7 +54,6 @@ def render_flood_field(
         rows, cols = np.meshgrid(np.arange(0, n, step), np.arange(0, n, step), indexing="ij")
         sub_dir = direction[rows, cols]
 
-        # Direction encoding from serial_dijkstra.hpp:
         # 0 = Up (-1, 0), 1 = Right (0, +1), 2 = Down (+1, 0), 3 = Left (0, -1)
         u = np.zeros_like(sub_dir, dtype=np.float32)
         v = np.zeros_like(sub_dir, dtype=np.float32)
@@ -90,10 +87,10 @@ def render_flood_field(
                 [tc],
                 [tr],
                 marker="*",
-                s=180,
-                color="#00ff88",
+                s=190,
+                color="#00e5ff",
                 edgecolors="black",
-                linewidths=1.0,
+                linewidths=1.1,
                 zorder=5,
                 label=f"Target ({tr}, {tc})",
             )
