@@ -189,4 +189,6 @@ if __name__ == "__main__":
         parallel_trace_path=args.parallel,
         output_path=args.out,
         frames=args.frames,
-        fps=args.
+        fps=args.fps,
+        hold_seconds=args.hold,
+    )
