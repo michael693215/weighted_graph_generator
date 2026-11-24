@@ -26,26 +26,30 @@ Custom parameters (`./driver <n> <w_max> <k> <obstacle_density> <seed>`):
 
 ```
 
-### 3. Export CSVs & Generate Visualization
+### 3. Set Up Python Virtual Environment (One-Time)
 
-Install Python dependencies (one-time):
+Create and activate `.venv`, then install dependencies from `requirements.txt`:
 
 ```bash
-pip install numpy matplotlib
+python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 
 ```
+
+*(Whenever you open a new terminal session later, re-activate it with `source .venv/bin/activate`.)*
+
+### 4. Export CSVs & Generate Visualization
 
 Run with `--export` (smaller grids like `60x60` render crisp flow arrows) and generate `flood_field.png`:
 
 ```bash
-./driver 60 100 0 0.20 42 --export && python3 visualize.py
+./driver 60 100 0 0.20 42 --export && python visualize.py
 
 ```
 
 Optional visualization flags:
 
 ```bash
-python3 visualize.py --out custom_name.png --no-arrows
+python visualize.py --out custom_name.png --no-arrows
 
 ```
 
@@ -67,5 +71,4 @@ g++ -std=c++17 -O2 -o exec main.cpp graph.cpp && ./exec
 * `serial_dijkstra.hpp` / `serial_dijkstra.cpp` — Serial Dijkstra flood field baseline.
 * `driver.cpp` — Benchmark runner and CSV exporter.
 * `visualize.py` — Generates `flood_field.png` from exported CSVs.
-
-```
+* `requirements.txt` — Python dependencies for visualization.
