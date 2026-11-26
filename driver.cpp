@@ -11,6 +11,10 @@
 
 namespace {
 
+std::string print_algorithm(ALGORITHM a) {
+    return a == ALGORITHM::DIJKSTRA ? "Dijkstra" : "Dial";
+}
+
 std::string format_duration(double ns) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2);
@@ -71,6 +75,7 @@ int main(int argc, char* argv[]) {
     std::uint64_t seed = 42;
     bool do_export = false;
     bool do_trace = false;
+    ALGORITHM a = ALGORITHM::DIJKSTRA;
 
     std::vector<std::string> pos_args;
     for (int i = 1; i < argc; ++i) {
@@ -80,7 +85,12 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--trace") {
             do_trace = true;
             do_export = true;
-        } else {
+        } else if (arg == "--dijkstra") {
+            a = ALGORITHM::DIJKSTRA;
+        } else if (arg == "--dial") {
+            a = ALGORITHM::DIAL;
+        }
+        else {
             pos_args.push_back(arg);
         }
     }
@@ -96,22 +106,23 @@ int main(int argc, char* argv[]) {
 
     // 2. Run & time pure serial Dijkstra baseline
     const auto t0 = std::chrono::steady_clock::now();
-    FloodField serial_ff = compute_flood_field_serial(g);
+    FloodField serial_ff = compute_flood_field_serial(g, a);
     const auto t1 = std::chrono::steady_clock::now();
 
     const double serial_ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
 
     std::cout << "=== Flood Field Benchmark ===\n"
+              << "Algorithm      : " << print_algorithm(a) << '\n'
               << "Grid size      : " << n << " x " << n << " (" << g.p.size << " cells)\n"
               << "Target cell    : " << g.p.t << " (row " << (g.p.t / n) << ", col " << (g.p.t % n) << ")\n"
               << "Obstacle ratio : " << g.p.obstacle_d << "\n"
               << "Reachable cells: " << serial_ff.reachable_cells << " / " << g.p.size << "\n"
-              << "Serial Dijkstra: " << format_duration(serial_ns) << "\n";
+              << "Duration: " << format_duration(serial_ns) << "\n";
 
     // TODO: Run parallel Delta-Stepping here and verify `parallel_ff.dist == serial_ff.dist`
 
     if (do_trace) {
-        FloodField traced_ff = compute_flood_field_serial_traced(g);
+        FloodField traced_ff = compute_flood_field_serial_traced(g, a);
         export_csv(g, traced_ff, true);
     } else if (do_export) {
         export_csv(g, serial_ff, false);

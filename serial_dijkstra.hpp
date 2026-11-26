@@ -6,6 +6,8 @@
 #include <limits>
 #include <vector>
 
+enum class ALGORITHM { DIJKSTRA, DIAL };
+
 struct FloodField {
     static constexpr std::uint64_t INF = std::numeric_limits<std::uint64_t>::max();
 
@@ -22,9 +24,9 @@ struct FloodField {
 };
 
 // Pure serial baseline (zero logging overhead for accurate timing)
-FloodField compute_flood_field_serial(const Graph& g);
+FloodField compute_flood_field_serial(const Graph& g, ALGORITHM a);
 
 // Traced serial solver (records per-cell nanosecond settle timestamps for animation)
-FloodField compute_flood_field_serial_traced(const Graph& g);
+FloodField compute_flood_field_serial_traced(const Graph& g, ALGORITHM a);
 
 #endif

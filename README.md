@@ -38,7 +38,7 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 ### 4. Generate Static Flood Field Image (`flood_field.png`)
 
 ```bash
-./driver 60 100 0 0.20 42 --export && python visualize.py
+./driver 60 100 0 0.20 42 --export --[dijkstra | dial] && python visualize.py
 
 ```
 
@@ -47,7 +47,7 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 Export the nanosecond settle trace with `--trace` and render the animation:
 
 ```bash
-./driver 60 100 0 0.20 42 --trace && python animate.py
+./driver 60 100 0 0.20 42 --trace --[dijkstra | dial] && python animate.py
 
 ```
 
