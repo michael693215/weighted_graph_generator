@@ -62,7 +62,7 @@ bool verify_bellman_optimality(const GraphT& g, const FloodFieldT& ff) {
     constexpr std::int64_t DC[4] = {0, 1, 0, -1};
     const std::int64_t n = ff.n;
     const std::int64_t target = g.p.t;
-    const auto INF = FloodFieldT::INF;
+    const std::uint32_t INF = static_cast<std::uint32_t>(FloodFieldT::INF);
 
     if (target < 0 || target >= g.p.size || g.weights[target] == 0) {
         return true;
@@ -88,4 +88,20 @@ bool verify_bellman_optimality(const GraphT& g, const FloodFieldT& ff) {
             const std::int64_t nr = r + DR[i];
             const std::int64_t nc = c + DC[i];
             if (nr < 0 || nr >= n || nc < 0 || nc >= n) continue;
-            const std::int64_t v
+            const std::int64_t v = nr * n + nc;
+            if (g.weights[v] == 0 || ff.dist[v] == INF) continue;
+
+            const std::uint32_t cand = ff.dist[v] + static_cast<std::uint32_t>(g.weights[v]);
+            if (cand < best_neighbor) {
+                best_neighbor = cand;
+            }
+        }
+
+        // Every reachable cell must equal its best neighbor's cost;
+        // every unreachable cell must have no reachable neighbors.
+        if (ff.dist[u] != best_neighbor) {
+            return false;
+        }
+    }
+    return true;
+}

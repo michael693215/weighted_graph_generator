@@ -9,7 +9,7 @@
 enum class ALGORITHM { DIJKSTRA, DIAL };
 
 struct FloodField {
-    static constexpr std::uint64_t INF = std::numeric_limits<std::uint32_t>::max();
+    static constexpr std::uint32_t INF = std::numeric_limits<std::uint32_t>::max();
 
     // Direction an agent in cell i should move to reach target p.t:
     // -1 = Target, Obstacle, or Unreachable | 0 = Up | 1 = Right | 2 = Down | 3 = Left
