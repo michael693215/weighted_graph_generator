@@ -14,8 +14,6 @@ brew install libomp open-mpi
 
 ```
 
-*(Note: If you skip this step on macOS, `make` will still compile cleanly, but OpenMP will fall back to 1 thread and `make mpi` will not be available.)*
-
 **Ubuntu / Debian / WSL:**
 
 ```bash
