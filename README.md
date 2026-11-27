@@ -1,14 +1,23 @@
 # Parallel Flood Field Generation
 
-Benchmarking serial vs. parallel single-source shortest path algorithms (Dijkstra, Dial's, and Delta-Stepping) for 2D grid flood field generation.
+Benchmarking serial vs. parallel single-source shortest path algorithms (Dijkstra, Dial's, OpenMP Delta-Stepping, and MPI Delta-Stepping) for 2D grid flood field generation.
 
 ---
 
 ## Setup
 
 ### 1. Compile the Benchmark Driver
+
+**OpenMP Only (standard `g++`):**
 ```bash
-g++ -std=c++17 -O3 -o driver driver.cpp serial_dijkstra.cpp graph.cpp
+g++ -std=c++17 -O3 -fopenmp -o driver driver.cpp serial_dijkstra.cpp parallel_dijkstra.cpp graph.cpp
+
+```
+
+**OpenMP + MPI (`mpicxx`):**
+
+```bash
+mpicxx -std=c++17 -O3 -fopenmp -DUSE_MPI -o driver driver.cpp serial_dijkstra.cpp parallel_dijkstra.cpp graph.cpp
 
 ```
 
@@ -25,7 +34,8 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 
 ## Pure Timing Benchmarks (No File Exports)
 
-Arguments: `./driver <n> <w_max> <k> <obstacle_density> [--dijkstra | --dial] [seed]`
+Arguments:
+`./driver <n> <w_max> <k> <obstacle_density> [seed] [--dijkstra | --dial | --omp | --mpi] [--delta=<val>] [--threads=<val>] [--no-verify]`
 
 **Run Serial Dijkstra (`2000x2000`):**
 
@@ -41,21 +51,37 @@ Arguments: `./driver <n> <w_max> <k> <obstacle_density> [--dijkstra | --dial] [s
 
 ```
 
+**Run OpenMP Delta-Stepping (`2000x2000`, `delta=40`, `8` threads):**
+
+```bash
+./driver 2000 100 0 0.25 --omp --delta=40 --threads=8
+
+```
+
+**Run MPI Delta-Stepping (`2000x2000`, `delta=40`, `4` ranks):**
+
+```bash
+mpirun -np 4 ./driver 2000 100 0 0.25 --mpi --delta=40
+
+```
+
+**Sweep Bucket Size ($\Delta$) & Thread Counts:**
+
+```bash
+for d in 5 15 30 50 100 200; do
+  ./driver 2000 100 0 0.25 --omp --delta=$d --threads=8
+done
+
+```
+
 ---
 
 ## Static Flood Field Images (`output/*.png`)
 
-**Generate Dijkstra static image:**
+**Generate OpenMP Delta-Stepping static image:**
 
 ```bash
-./driver 60 100 0 0.20 --export --dijkstra && python visualize.py --title="Serial Dijkstra" --output=output/flood_field_base_dijkstra.png
-
-```
-
-**Generate Dial's static image:**
-
-```bash
-./driver 60 100 0 0.20 --export --dial && python visualize.py --title="Serial Dial's" --output=output/flood_field_base_dial.png
+./driver 60 100 0 0.20 --export --omp --delta=30 --threads=4 && python visualize.py --title="OpenMP Delta-Stepping (delta=30)" --output=output/flood_field_omp.png
 
 ```
 
@@ -63,38 +89,41 @@ Arguments: `./driver <n> <w_max> <k> <obstacle_density> [--dijkstra | --dial] [s
 
 ## Propagation Animations (`output/*.gif` or `.mp4`)
 
-**Generate Dijkstra GIF:**
+Trace CSVs are automatically named with their backend, $\Delta$, and worker count (e.g., `trace_omp_d30_t8.csv` or `trace_mpi_d30_r4.csv`) so multiple runs do not overwrite each other.
+
+**Generate OpenMP GIF for a specific $\Delta$ and thread count:**
 
 ```bash
-./driver 60 100 0 0.20 --trace --dijkstra && python animate.py --trace=output/trace_dijkstra.csv --title="Serial Dijkstra" --output=output/flood_field_base_dijkstra.gif
+./driver 80 100 0 0.20 --trace --omp --delta=30 --threads=8 && python animate.py --trace=output/trace_omp_d30_t8.csv --title="OpenMP Delta-Stepping (delta=30, 8T)" --output=output/omp_d30_t8.gif
 
 ```
 
-**Generate Dial's GIF:**
+**Compare two $\Delta$ values side-by-side (`delta=10` vs `delta=50`):**
 
 ```bash
-./driver 60 100 0 0.20 --trace --dial && python animate.py --trace=output/trace_dial.csv --title="Serial Dial's" --output=output/flood_field_base_dial.gif
+./driver 120 100 0 0.20 --trace --omp --delta=10 --threads=8 && \
+./driver 120 100 0 0.20 --trace --omp --delta=50 --threads=8 && \
+python animate.py \
+  --trace=output/trace_omp_d10_t8.csv --title="OpenMP (delta=10, 8T)" \
+  --compare=output/trace_omp_d50_t8.csv --compare-title="OpenMP (delta=50, 8T)" \
+  --output=output/omp_delta_comparison.mp4 --frames=150 --fps=30
 
 ```
 
-**Generate Side-by-Side Comparison (`Dijkstra` vs `Dial's`) as MP4:**
+**Compare Serial Dial's vs. Parallel OpenMP side-by-side:**
 
 ```bash
-./driver 150 100 0 0.20 --trace --dijkstra && ./driver 150 100 0 0.20 --trace --dial && python animate.py --trace=output/trace_dijkstra.csv --title="Serial Dijkstra" --compare=output/trace_dial.csv --compare-title="Serial Dial's" --output=output/dijkstra_vs_dial.mp4 --frames=150 --fps=30
-
-```
-
----
-
-## Original Graph Generator Tests
-
-Uncomment a test block in `main.cpp` and run:
-
-```bash
-g++ -std=c++17 -O2 -o exec main.cpp graph.cpp && ./exec
+./driver 120 100 0 0.20 --trace --dial && \
+./driver 120 100 0 0.20 --trace --omp --delta=40 --threads=8 && \
+python animate.py \
+  --trace=output/trace_dial.csv --title="Serial Dial's" \
+  --compare=output/trace_omp_d40_t8.csv --compare-title="OpenMP Delta-Stepping (8T)" \
+  --output=output/dial_vs_omp.mp4 --frames=150 --fps=30
 
 ```
 
 ```
+
+*(Note: `graph.hpp`, `graph.cpp`, `serial_dijkstra.hpp`, `serial_dijkstra.cpp`, `animate.py`, and `visualize.py` work as-is with zero modifications required[cite: 1, 3, 5, 6, 7, 8]!)*
 
 ```
