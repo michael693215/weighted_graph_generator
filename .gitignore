@@ -7,8 +7,5 @@ __pycache__/
 driver
 exec
 
-# Generated benchmark CSVs, images, and animations
-*.csv
-*.png
-*.gif
-*.mp4
+# All generated benchmark CSVs, images, and animations
+output/

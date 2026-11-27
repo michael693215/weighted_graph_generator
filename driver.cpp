@@ -1,7 +1,10 @@
 #include "graph.hpp"
 #include "serial_dijkstra.hpp"
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -9,7 +12,20 @@
 #include <string>
 #include <vector>
 
+namespace fs = std::filesystem;
+
 namespace {
+
+std::string print_algorithm(ALGORITHM a) {
+    return a == ALGORITHM::DIJKSTRA ? "Dijkstra" : "Dial";
+}
+
+std::string algo_slug(ALGORITHM a) {
+    std::string s = print_algorithm(a);
+    std::transform(s.begin(), s.end(), s.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return s;
+}
 
 std::string format_duration(double ns) {
     std::ostringstream oss;
@@ -26,13 +42,20 @@ std::string format_duration(double ns) {
     return oss.str();
 }
 
-void export_csv(const Graph& g, const FloodField& ff, bool include_trace) {
-    std::ofstream f_weights("weights.csv");
-    std::ofstream f_dist("flood_dist.csv");
-    std::ofstream f_dir("flood_dir.csv");
+void export_csv(const Graph& g, const FloodField& ff, ALGORITHM a, bool include_trace, const fs::path& out_dir) {
+    fs::create_directories(out_dir);
+
+    const fs::path weights_path = out_dir / "weights.csv";
+    const fs::path dist_path    = out_dir / "flood_dist.csv";
+    const fs::path dir_path     = out_dir / "flood_dir.csv";
+    const fs::path trace_path   = out_dir / ("trace_" + algo_slug(a) + ".csv");
+
+    std::ofstream f_weights(weights_path);
+    std::ofstream f_dist(dist_path);
+    std::ofstream f_dir(dir_path);
     std::ofstream f_trace;
     if (include_trace) {
-        f_trace.open("trace_serial.csv");
+        f_trace.open(trace_path);
     }
 
     for (std::int64_t r = 0; r < ff.n; ++r) {
@@ -55,9 +78,14 @@ void export_csv(const Graph& g, const FloodField& ff, bool include_trace) {
     }
 
     if (include_trace) {
-        std::cout << "Exported weights.csv, flood_dist.csv, flood_dir.csv, and trace_serial.csv\n";
+        std::cout << "Exported " << weights_path.string() << ", "
+                  << dist_path.string() << ", "
+                  << dir_path.string() << ", and "
+                  << trace_path.string() << '\n';
     } else {
-        std::cout << "Exported weights.csv, flood_dist.csv, and flood_dir.csv\n";
+        std::cout << "Exported " << weights_path.string() << ", "
+                  << dist_path.string() << ", and "
+                  << dir_path.string() << '\n';
     }
 }
 
@@ -71,6 +99,8 @@ int main(int argc, char* argv[]) {
     std::uint64_t seed = 42;
     bool do_export = false;
     bool do_trace = false;
+    ALGORITHM a = ALGORITHM::DIJKSTRA;
+    fs::path out_dir = "output";
 
     std::vector<std::string> pos_args;
     for (int i = 1; i < argc; ++i) {
@@ -80,6 +110,12 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--trace") {
             do_trace = true;
             do_export = true;
+        } else if (arg == "--dijkstra") {
+            a = ALGORITHM::DIJKSTRA;
+        } else if (arg == "--dial") {
+            a = ALGORITHM::DIAL;
+        } else if (arg.rfind("--out-dir=", 0) == 0) {
+            out_dir = arg.substr(10);
         } else {
             pos_args.push_back(arg);
         }
@@ -94,27 +130,28 @@ int main(int argc, char* argv[]) {
     // 1. Generate deterministic terrain map
     Graph g(n, w_max, k, obstacle_d, seed);
 
-    // 2. Run & time pure serial Dijkstra baseline
+    // 2. Run & time solver
     const auto t0 = std::chrono::steady_clock::now();
-    FloodField serial_ff = compute_flood_field_serial(g);
+    FloodField serial_ff = compute_flood_field_serial(g, a);
     const auto t1 = std::chrono::steady_clock::now();
 
     const double serial_ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
 
     std::cout << "=== Flood Field Benchmark ===\n"
+              << "Algorithm      : " << print_algorithm(a) << '\n'
               << "Grid size      : " << n << " x " << n << " (" << g.p.size << " cells)\n"
               << "Target cell    : " << g.p.t << " (row " << (g.p.t / n) << ", col " << (g.p.t % n) << ")\n"
               << "Obstacle ratio : " << g.p.obstacle_d << "\n"
               << "Reachable cells: " << serial_ff.reachable_cells << " / " << g.p.size << "\n"
-              << "Serial Dijkstra: " << format_duration(serial_ns) << "\n";
+              << "Duration       : " << format_duration(serial_ns) << "\n";
 
     // TODO: Run parallel Delta-Stepping here and verify `parallel_ff.dist == serial_ff.dist`
 
     if (do_trace) {
-        FloodField traced_ff = compute_flood_field_serial_traced(g);
-        export_csv(g, traced_ff, true);
+        FloodField traced_ff = compute_flood_field_serial_traced(g, a);
+        export_csv(g, traced_ff, a, true, out_dir);
     } else if (do_export) {
-        export_csv(g, serial_ff, false);
+        export_csv(g, serial_ff, a, false, out_dir);
     }
 
     return 0;

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from __future__ import annotations
 
 import argparse
@@ -56,8 +58,10 @@ def build_frame_rgba(
 def generate_animation(
     weights_path: str,
     dist_path: str,
-    serial_trace_path: str,
-    parallel_trace_path: Optional[str],
+    primary_trace_path: str,
+    primary_title: str,
+    secondary_trace_path: Optional[str],
+    secondary_title: str,
     output_path: str,
     frames: int,
     fps: int,
@@ -65,12 +69,12 @@ def generate_animation(
 ):
     weights = np.loadtxt(weights_path, delimiter=",", dtype=np.int64, ndmin=2)
     dist = np.loadtxt(dist_path, delimiter=",", dtype=np.float64, ndmin=2)
-    serial_trace = np.loadtxt(serial_trace_path, delimiter=",", dtype=np.int64, ndmin=2)
+    primary_trace = np.loadtxt(primary_trace_path, delimiter=",", dtype=np.int64, ndmin=2)
 
-    traces = [("Serial Dijkstra", serial_trace)]
-    if parallel_trace_path:
-        parallel_trace = np.loadtxt(parallel_trace_path, delimiter=",", dtype=np.int64, ndmin=2)
-        traces.append(("Parallel Delta-Stepping", parallel_trace))
+    traces = [(primary_title, primary_trace)]
+    if secondary_trace_path:
+        secondary_trace = np.loadtxt(secondary_trace_path, delimiter=",", dtype=np.int64, ndmin=2)
+        traces.append((secondary_title, secondary_trace))
 
     n = weights.shape[0]
     valid_dist = dist[(weights > 0) & (dist >= 0)]
@@ -81,7 +85,7 @@ def generate_animation(
     total_ns = max(solver_max_ns)
 
     # Total traversable & reachable cells for completion percentage
-    total_reachable = int(np.sum((weights > 0) & (serial_trace >= 0)))
+    total_reachable = int(np.sum((weights > 0) & (primary_trace >= 0)))
     total_reachable = max(1, total_reachable)
 
     # Locate target cell
@@ -153,6 +157,10 @@ def generate_animation(
 
     anim = FuncAnimation(fig, update, frames=len(timeline), interval=1000 / fps, blit=False)
 
+    out_parent = os.path.dirname(output_path)
+    if out_parent:
+        os.makedirs(out_parent, exist_ok=True)
+
     ext = os.path.splitext(output_path)[1].lower()
     if ext == ".mp4":
         try:
@@ -172,11 +180,13 @@ def generate_animation(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate flood field propagation GIF or MP4 from CSV trace.")
-    parser.add_argument("--weights", default="weights.csv", help="Path to weights.csv")
-    parser.add_argument("--dist", default="flood_dist.csv", help="Path to flood_dist.csv")
-    parser.add_argument("--serial", default="trace_serial.csv", help="Path to trace_serial.csv")
-    parser.add_argument("--parallel", default=None, help="Optional path to trace_parallel.csv for side-by-side")
-    parser.add_argument("--out", default="flood_animation.gif", help="Output filename (.gif or .mp4)")
+    parser.add_argument("--weights", default="output/weights.csv", help="Path to weights.csv")
+    parser.add_argument("--dist", default="output/flood_dist.csv", help="Path to flood_dist.csv")
+    parser.add_argument("--trace", "--serial", dest="trace", default="output/trace_dijkstra.csv", help="Primary trace CSV")
+    parser.add_argument("--title", default="Serial Dijkstra", help="Title for primary panel")
+    parser.add_argument("--compare", "--parallel", dest="compare", default=None, help="Optional second trace CSV")
+    parser.add_argument("--compare-title", default="Serial Dial's", help="Title for comparison panel")
+    parser.add_argument("--out", "--output", dest="out", default="output/flood_animation.gif", help="Output (.gif or .mp4)")
     parser.add_argument("--frames", type=int, default=120, help="Number of active animation frames")
     parser.add_argument("--fps", type=int, default=24, help="Frames per second")
     parser.add_argument("--hold", type=float, default=1.5, help="Seconds to pause on the completed final frame")
@@ -185,8 +195,10 @@ if __name__ == "__main__":
     generate_animation(
         weights_path=args.weights,
         dist_path=args.dist,
-        serial_trace_path=args.serial,
-        parallel_trace_path=args.parallel,
+        primary_trace_path=args.trace,
+        primary_title=args.title,
+        secondary_trace_path=args.compare,
+        secondary_title=args.compare_title,
         output_path=args.out,
         frames=args.frames,
         fps=args.fps,
