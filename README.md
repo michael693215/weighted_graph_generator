@@ -4,24 +4,26 @@ Benchmarking serial vs. parallel single-source shortest path algorithms (Dijkstr
 
 ---
 
-## Setup
+## 1. One-Time Setup
 
-### 1. Compile the Benchmark Driver
+### System Dependencies (OpenMP & MPI)
 
-**OpenMP Only (standard `g++`):**
+**macOS (via Homebrew):**
 ```bash
-g++ -std=c++17 -O3 -fopenmp -o driver driver.cpp serial_dijkstra.cpp parallel_dijkstra.cpp graph.cpp
+brew install libomp open-mpi
 
 ```
 
-**OpenMP + MPI (`mpicxx`):**
+*(Note: If you skip this step on macOS, `make` will still compile cleanly, but OpenMP will fall back to 1 thread and `make mpi` will not be available.)*
+
+**Ubuntu / Debian / WSL:**
 
 ```bash
-mpicxx -std=c++17 -O3 -fopenmp -DUSE_MPI -o driver driver.cpp serial_dijkstra.cpp parallel_dijkstra.cpp graph.cpp
+sudo apt update && sudo apt install -y build-essential libomp-dev openmpi-bin libopenmpi-dev
 
 ```
 
-### 2. Set Up Python Virtual Environment (One-Time)
+### Python Virtual Environment (For Visualizations & Animations)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
@@ -32,7 +34,34 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 
 ---
 
-## Pure Timing Benchmarks (No File Exports)
+## 2. Build the Benchmark Driver
+
+The included `Makefile` automatically configures OpenMP flags for both macOS and Linux.
+
+**Build OpenMP + Serial Solvers (Recommended default):**
+
+```bash
+make
+
+```
+
+**Build OpenMP + MPI + Serial Solvers:**
+
+```bash
+make mpi
+
+```
+
+**Clean Build Artifacts:**
+
+```bash
+make clean
+
+```
+
+---
+
+## 3. Pure Timing Benchmarks (No File Exports)
 
 Arguments:
 `./driver <n> <w_max> <k> <obstacle_density> [seed] [--dijkstra | --dial | --omp | --mpi] [--delta=<val>] [--threads=<val>] [--no-verify]`
@@ -58,7 +87,7 @@ Arguments:
 
 ```
 
-**Run MPI Delta-Stepping (`2000x2000`, `delta=40`, `4` ranks):**
+**Run MPI Delta-Stepping (`2000x2000`, `delta=40`, `4` ranks — requires `make mpi`):**
 
 ```bash
 mpirun -np 4 ./driver 2000 100 0 0.25 --mpi --delta=40
@@ -76,7 +105,21 @@ done
 
 ---
 
-## Static Flood Field Images (`output/*.png`)
+## 4. Static Flood Field Images (`output/*.png`)
+
+**Generate Dijkstra static image:**
+
+```bash
+./driver 60 100 0 0.20 --export --dijkstra && python visualize.py --title="Serial Dijkstra" --output=output/flood_field_base_dijkstra.png
+
+```
+
+**Generate Dial's static image:**
+
+```bash
+./driver 60 100 0 0.20 --export --dial && python visualize.py --title="Serial Dial's" --output=output/flood_field_base_dial.png
+
+```
 
 **Generate OpenMP Delta-Stepping static image:**
 
@@ -87,7 +130,7 @@ done
 
 ---
 
-## Propagation Animations (`output/*.gif` or `.mp4`)
+## 5. Propagation Animations (`output/*.gif` or `.mp4`)
 
 Trace CSVs are automatically named with their backend, $\Delta$, and worker count (e.g., `trace_omp_d30_t8.csv` or `trace_mpi_d30_r4.csv`) so multiple runs do not overwrite each other.
 
@@ -124,6 +167,6 @@ python animate.py \
 
 ```
 
-*(Note: `graph.hpp`, `graph.cpp`, `serial_dijkstra.hpp`, `serial_dijkstra.cpp`, `animate.py`, and `visualize.py` work as-is with zero modifications required[cite: 1, 3, 5, 6, 7, 8]!)*
+*(Quick verification after running `brew install libomp open-mpi` and `make`: run `./driver 500 100 0 0.20 --omp --threads=4` and confirm the output prints `Workers        : 4` and `Verification   : PASS`.)*
 
 ```
