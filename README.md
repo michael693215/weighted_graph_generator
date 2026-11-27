@@ -2,7 +2,9 @@
 
 Benchmarking serial vs. parallel single-source shortest path algorithms (Dijkstra, Dial's, and Delta-Stepping) for 2D grid flood field generation.
 
-## Quick Start
+---
+
+## Setup
 
 ### 1. Compile the Benchmark Driver
 ```bash
@@ -10,23 +12,7 @@ g++ -std=c++17 -O3 -o driver driver.cpp serial_dijkstra.cpp graph.cpp
 
 ```
 
-### 2. Run a Benchmark
-
-Default run (`500x500` grid, weights `1..100`, `20%` obstacles, seed `42`):
-
-```bash
-./driver
-
-```
-
-Custom parameters (`./driver <n> <w_max> <k> <obstacle_density> <seed>`):
-
-```bash
-./driver 2000 100 0 0.25 42
-
-```
-
-### 3. Set Up Python Virtual Environment (One-Time)
+### 2. Set Up Python Virtual Environment (One-Time)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
@@ -35,33 +21,66 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 
 *(Re-activate in new terminal sessions with `source .venv/bin/activate`.)*
 
-### 4. Generate Static Flood Field Image (`flood_field.png`)
+---
+
+## Pure Timing Benchmarks (No File Exports)
+
+Arguments: `./driver <n> <w_max> <k> <obstacle_density> [--dijkstra | --dial] [seed]`
+
+**Run Serial Dijkstra (`2000x2000`):**
 
 ```bash
-./driver 60 100 0 0.20 42 --export --[dijkstra | dial] && python visualize.py
+./driver 2000 100 0 0.25 --dijkstra
 
 ```
 
-### 5. Generate Propagation Animation (`flood_animation.gif` or `.mp4`)
-
-Export the nanosecond settle trace with `--trace` and render the animation:
+**Run Serial Dial's (`2000x2000`):**
 
 ```bash
-./driver 60 100 0 0.20 42 --trace --[dijkstra | dial] && python animate.py
+./driver 2000 100 0 0.25 --dial
 
 ```
 
-Render as an `.mp4` or adjust frame count / FPS:
+---
+
+## Static Flood Field Images (`output/*.png`)
+
+**Generate Dijkstra static image:**
 
 ```bash
-python animate.py --out flood_animation.mp4 --frames 150 --fps 30
+./driver 60 100 0 0.20 --export --dijkstra && python visualize.py --title="Serial Dijkstra" --output=output/flood_field_base_dijkstra.png
 
 ```
 
-Side-by-side comparison (once `trace_parallel.csv` is generated):
+**Generate Dial's static image:**
 
 ```bash
-python animate.py --parallel trace_parallel.csv --out comparison.mp4
+./driver 60 100 0 0.20 --export --dial && python visualize.py --title="Serial Dial's" --output=output/flood_field_base_dial.png
+
+```
+
+---
+
+## Propagation Animations (`output/*.gif` or `.mp4`)
+
+**Generate Dijkstra GIF:**
+
+```bash
+./driver 60 100 0 0.20 --trace --dijkstra && python animate.py --trace=output/trace_dijkstra.csv --title="Serial Dijkstra" --output=output/flood_field_base_dijkstra.gif
+
+```
+
+**Generate Dial's GIF:**
+
+```bash
+./driver 60 100 0 0.20 --trace --dial && python animate.py --trace=output/trace_dial.csv --title="Serial Dial's" --output=output/flood_field_base_dial.gif
+
+```
+
+**Generate Side-by-Side Comparison (`Dijkstra` vs `Dial's`) as MP4:**
+
+```bash
+./driver 150 100 0 0.20 --trace --dijkstra && ./driver 150 100 0 0.20 --trace --dial && python animate.py --trace=output/trace_dijkstra.csv --title="Serial Dijkstra" --compare=output/trace_dial.csv --compare-title="Serial Dial's" --output=output/dijkstra_vs_dial.mp4 --frames=150 --fps=30
 
 ```
 
@@ -73,5 +92,9 @@ Uncomment a test block in `main.cpp` and run:
 
 ```bash
 g++ -std=c++17 -O2 -o exec main.cpp graph.cpp && ./exec
+
+```
+
+```
 
 ```
