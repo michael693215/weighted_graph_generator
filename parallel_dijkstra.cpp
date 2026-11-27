@@ -161,6 +161,7 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
     std::size_t total_items = 0;
     bool done = false;
     bool in_heavy_phase = false;
+    std::int64_t phase_ns = 0;
     std::uint64_t bucket_steps = 0;
     std::uint64_t light_phases = 0;
 
@@ -179,9 +180,14 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 #endif
 
         while (true) {
-            // Thread 0 selects the next non-empty bucket or next light/heavy phase
+            // Single thread selects the next non-empty bucket or next light/heavy phase
             #pragma omp single
             {
+                if constexpr (RecordTrace) {
+                    const auto now = std::chrono::steady_clock::now();
+                    phase_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
+                }
+
                 in_heavy_phase = false;
 
                 // Check if current bucket still has light items to drain
@@ -239,7 +245,7 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                         }
                     }
                 }
-            } // implicit barrier after omp single
+            } // implicit barrier after omp single ensures `phase_ns` and loop state are visible to all threads
 
             if (done) {
                 break;
@@ -266,14 +272,6 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 
             #pragma omp barrier
 
-            std::int64_t phase_ns = 0;
-            if constexpr (RecordTrace) {
-                if (tid == 0) {
-                    const auto now = std::chrono::steady_clock::now();
-                    phase_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
-                }
-            }
-
             // Relax frontier in parallel
             #pragma omp for schedule(static)
             for (std::size_t i = 0; i < total_items; ++i) {
@@ -286,16 +284,16 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                     continue;
                 }
 
-                if constexpr (RecordTrace) {
-                    res.ff.settle_ns[u] = phase_ns;
-                }
-
                 const std::uint64_t step_cost = static_cast<std::uint64_t>(g.weights[u]);
 
                 // During light phase, defer heavy vertices to the bucket's heavy phase
                 if (!in_heavy_phase && step_cost > delta) {
                     local_heavy[tid].push_back({d_u, u});
                     continue;
+                }
+
+                if constexpr (RecordTrace) {
+                    res.ff.settle_ns[u] = phase_ns;
                 }
 
                 const std::int64_t r = u / n;
@@ -507,14 +505,14 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
                     continue;
                 }
 
-                if constexpr (RecordTrace) {
-                    local_trace[l_u] = phase_ns;
-                }
-
                 const std::uint64_t step_cost = static_cast<std::uint64_t>(g.weights[u]);
                 if (step_cost > delta) {
                     heavy_candidates.push_back({d_u, u});
                     continue;
+                }
+
+                if constexpr (RecordTrace) {
+                    local_trace[l_u] = phase_ns;
                 }
 
                 const std::int64_t r = u / n;
@@ -548,12 +546,22 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
         }
 
         // Phase 2: Relax heavy vertices once across all ranks
+        std::int64_t heavy_phase_ns = 0;
+        if constexpr (RecordTrace) {
+            const auto now = std::chrono::steady_clock::now();
+            heavy_phase_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
+        }
+
         for (const auto& entry : heavy_candidates) {
             const std::int64_t u = entry.vertex;
             const std::int64_t l_u = u - cell_offset;
             const std::uint64_t d_u = local_dist[l_u];
             if (entry.dist > d_u) {
                 continue;
+            }
+
+            if constexpr (RecordTrace) {
+                local_trace[l_u] = heavy_phase_ns;
             }
 
             const std::uint64_t step_cost = static_cast<std::uint64_t>(g.weights[u]);
