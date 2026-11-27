@@ -94,12 +94,13 @@ void export_csv(const Graph& g,
             const char sep = (c + 1 < ff.n) ? ',' : '\n';
 
             f_weights << g.weights[idx] << sep;
-            if (ff.dist[idx] == FloodField::INF) {
+            const std::uint32_t d = ff.dist_at(idx);
+            if (d == FloodField::INF_DIST) {
                 f_dist << -1 << sep;
             } else {
-                f_dist << ff.dist[idx] << sep;
+                f_dist << d << sep;
             }
-            f_dir << static_cast<int>(ff.dir[idx]) << sep;
+            f_dir << static_cast<int>(ff.dir_at(idx)) << sep;
 
             if (include_trace) {
                 f_trace << ff.settle_ns[idx] << sep;
@@ -208,7 +209,7 @@ int main(int argc, char* argv[]) {
 
             if (!skip_verify) {
                 std::cout << "Verification   : "
-                          << (ok ? "PASS (Bellman optimality verified)" : "FAIL (Bellman optimality violated)")
+                          << (ok ? "PASS (Bellman optimality + flow verified)" : "FAIL (Bellman optimality violated)")
                           << "\n";
             }
 
@@ -272,7 +273,7 @@ int main(int argc, char* argv[]) {
 
             if (!skip_verify) {
                 if (ok) {
-                    std::cout << "Verification   : PASS (Bellman optimality verified)\n";
+                    std::cout << "Verification   : PASS (Bellman optimality + flow verified)\n";
                 } else {
                     std::cerr << "Verification   : FAIL (Bellman optimality violated)!\n";
                 }

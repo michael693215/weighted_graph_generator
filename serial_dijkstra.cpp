@@ -21,8 +21,7 @@ FloodField run_dijkstra(const Graph& g) {
     }
 
     ff.n = static_cast<std::int64_t>(std::llround(std::sqrt(static_cast<double>(g.p.size))));
-    ff.dist.assign(g.p.size, FloodField::INF);
-    ff.dir.assign(g.p.size, -1);
+    ff.cells.assign(g.p.size, FloodField::INF_PACKED);
     if constexpr (RecordTrace) {
         ff.settle_ns.assign(g.p.size, -1);
     }
@@ -37,7 +36,7 @@ FloodField run_dijkstra(const Graph& g) {
 
     const auto t0 = std::chrono::steady_clock::now();
 
-    ff.dist[target] = 0;
+    ff.cells[target] = FloodField::pack(0, -1);
     pq.emplace(0, static_cast<std::uint32_t>(target));
 
     constexpr std::int64_t dr[4] = {-1, 0, 1, 0};
@@ -48,7 +47,7 @@ FloodField run_dijkstra(const Graph& g) {
         const auto [d, curr] = pq.top();
         pq.pop();
 
-        if (d > ff.dist[curr]) {
+        if (d > FloodField::unpack_dist(ff.cells[curr])) {
             continue;
         }
         ++ff.reachable_cells;
@@ -76,9 +75,8 @@ FloodField run_dijkstra(const Graph& g) {
             }
 
             const std::uint32_t new_dist = d + step_cost;
-            if (new_dist < ff.dist[next]) {
-                ff.dist[next] = new_dist;
-                ff.dir[next] = flow_to_curr[i];
+            if (new_dist < FloodField::unpack_dist(ff.cells[next])) {
+                ff.cells[next] = FloodField::pack(new_dist, flow_to_curr[i]);
                 pq.emplace(new_dist, next);
             }
         }
@@ -98,8 +96,7 @@ FloodField run_dial(const Graph& g) {
     }
 
     ff.n = static_cast<std::int64_t>(std::llround(std::sqrt(static_cast<double>(g.p.size))));
-    ff.dist.assign(g.p.size, FloodField::INF);
-    ff.dir.assign(g.p.size, -1);
+    ff.cells.assign(g.p.size, FloodField::INF_PACKED);
     if constexpr (RecordTrace) {
         ff.settle_ns.assign(g.p.size, -1);
     }
@@ -109,20 +106,18 @@ FloodField run_dial(const Graph& g) {
         return ff;
     }
 
-    // Max edge cost = max cell weight (cost of leaving a cell).
     std::uint32_t max_w = 0;
     for (std::int64_t i = 0; i < g.p.size; ++i) {
         max_w = std::max(max_w, static_cast<std::uint32_t>(g.weights[i]));
     }
 
-    // Circular bucket queue: all pending distances lie in [d, d + max_w].
     const std::uint32_t num_buckets = max_w + 1;
     std::vector<std::vector<std::uint32_t>> buckets(num_buckets);
-    std::uint64_t pending = 0; // entries currently stored across all buckets
+    std::uint64_t pending = 0;
 
     const auto t0 = std::chrono::steady_clock::now();
 
-    ff.dist[target] = 0;
+    ff.cells[target] = FloodField::pack(0, -1);
     buckets[0].push_back(static_cast<std::uint32_t>(target));
     ++pending;
 
@@ -133,15 +128,13 @@ FloodField run_dial(const Graph& g) {
     for (std::uint32_t d = 0; pending > 0; ++d) {
         auto& bucket = buckets[d % num_buckets];
 
-        // Edge costs are >= 1, so nothing processed here is ever added back
-        // to this same bucket; popping until empty is safe.
         while (!bucket.empty()) {
             const std::uint32_t curr = bucket.back();
             bucket.pop_back();
             --pending;
 
-            if (d > ff.dist[curr]) {
-                continue; // stale entry
+            if (d > FloodField::unpack_dist(ff.cells[curr])) {
+                continue;
             }
             ++ff.reachable_cells;
 
@@ -169,9 +162,8 @@ FloodField run_dial(const Graph& g) {
                 }
 
                 const std::uint32_t new_dist = d + step_cost;
-                if (new_dist < ff.dist[next]) {
-                    ff.dist[next] = new_dist;
-                    ff.dir[next] = flow_to_curr[i];
+                if (new_dist < FloodField::unpack_dist(ff.cells[next])) {
+                    ff.cells[next] = FloodField::pack(new_dist, flow_to_curr[i]);
                     buckets[new_dist % num_buckets].push_back(next);
                     ++pending;
                 }
