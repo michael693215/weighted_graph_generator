@@ -1,4 +1,5 @@
 #include "graph.hpp"
+#include "parallel_dijkstra.hpp"
 #include "serial_dijkstra.hpp"
 #include <algorithm>
 #include <cctype>
@@ -12,19 +13,43 @@
 #include <string>
 #include <vector>
 
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace {
 
-std::string print_algorithm(ALGORITHM a) {
-    return a == ALGORITHM::DIJKSTRA ? "Dijkstra" : "Dial";
+enum class SOLVER_MODE { DIJKSTRA, DIAL, OMP, MPI_SOLVER };
+
+std::string mode_name(SOLVER_MODE m) {
+    switch (m) {
+        case SOLVER_MODE::DIJKSTRA:   return "Serial Dijkstra";
+        case SOLVER_MODE::DIAL:       return "Serial Dial";
+        case SOLVER_MODE::OMP:        return "OpenMP Delta-Stepping";
+        case SOLVER_MODE::MPI_SOLVER: return "MPI Delta-Stepping";
+    }
+    return "Unknown";
 }
 
-std::string algo_slug(ALGORITHM a) {
-    std::string s = print_algorithm(a);
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return s;
+std::string trace_filename(SOLVER_MODE m, std::uint64_t delta, int workers) {
+    std::ostringstream oss;
+    switch (m) {
+        case SOLVER_MODE::DIJKSTRA:
+            oss << "trace_dijkstra.csv";
+            break;
+        case SOLVER_MODE::DIAL:
+            oss << "trace_dial.csv";
+            break;
+        case SOLVER_MODE::OMP:
+            oss << "trace_omp_d" << delta << "_t" << workers << ".csv";
+            break;
+        case SOLVER_MODE::MPI_SOLVER:
+            oss << "trace_mpi_d" << delta << "_r" << workers << ".csv";
+            break;
+    }
+    return oss.str();
 }
 
 std::string format_duration(double ns) {
@@ -42,13 +67,17 @@ std::string format_duration(double ns) {
     return oss.str();
 }
 
-void export_csv(const Graph& g, const FloodField& ff, ALGORITHM a, bool include_trace, const fs::path& out_dir) {
+void export_csv(const Graph& g,
+                const FloodField& ff,
+                const std::string& trace_file,
+                bool include_trace,
+                const fs::path& out_dir) {
     fs::create_directories(out_dir);
 
     const fs::path weights_path = out_dir / "weights.csv";
     const fs::path dist_path    = out_dir / "flood_dist.csv";
     const fs::path dir_path     = out_dir / "flood_dir.csv";
-    const fs::path trace_path   = out_dir / ("trace_" + algo_slug(a) + ".csv");
+    const fs::path trace_path   = out_dir / trace_file;
 
     std::ofstream f_weights(weights_path);
     std::ofstream f_dist(dist_path);
@@ -89,9 +118,29 @@ void export_csv(const Graph& g, const FloodField& ff, ALGORITHM a, bool include_
     }
 }
 
+bool verify_distances(const FloodField& expected, const FloodField& actual, std::int64_t& mismatch_idx) {
+    if (expected.dist.size() != actual.dist.size()) {
+        mismatch_idx = 0;
+        return false;
+    }
+    for (std::size_t i = 0; i < expected.dist.size(); ++i) {
+        if (expected.dist[i] != actual.dist[i]) {
+            mismatch_idx = static_cast<std::int64_t>(i);
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace
 
 int main(int argc, char* argv[]) {
+    int rank = 0;
+#ifdef USE_MPI
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
     std::int64_t n = 500;
     std::int64_t w_max = 100;
     int k = 0;
@@ -99,7 +148,10 @@ int main(int argc, char* argv[]) {
     std::uint64_t seed = 42;
     bool do_export = false;
     bool do_trace = false;
-    ALGORITHM a = ALGORITHM::DIJKSTRA;
+    bool skip_verify = false;
+    SOLVER_MODE mode = SOLVER_MODE::OMP;
+    std::uint64_t delta = 0;
+    int num_threads = 0;
     fs::path out_dir = "output";
 
     std::vector<std::string> pos_args;
@@ -110,10 +162,20 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--trace") {
             do_trace = true;
             do_export = true;
+        } else if (arg == "--no-verify") {
+            skip_verify = true;
         } else if (arg == "--dijkstra") {
-            a = ALGORITHM::DIJKSTRA;
+            mode = SOLVER_MODE::DIJKSTRA;
         } else if (arg == "--dial") {
-            a = ALGORITHM::DIAL;
+            mode = SOLVER_MODE::DIAL;
+        } else if (arg == "--omp") {
+            mode = SOLVER_MODE::OMP;
+        } else if (arg == "--mpi") {
+            mode = SOLVER_MODE::MPI_SOLVER;
+        } else if (arg.rfind("--delta=", 0) == 0) {
+            delta = std::stoull(arg.substr(8));
+        } else if (arg.rfind("--threads=", 0) == 0) {
+            num_threads = std::stoi(arg.substr(10));
         } else if (arg.rfind("--out-dir=", 0) == 0) {
             out_dir = arg.substr(10);
         } else {
@@ -127,32 +189,91 @@ int main(int argc, char* argv[]) {
     if (pos_args.size() >= 4) obstacle_d = std::stof(pos_args[3]);
     if (pos_args.size() >= 5) seed = std::stoull(pos_args[4]);
 
-    // 1. Generate deterministic terrain map
+    // 1. Generate deterministic terrain map (identical across all MPI ranks via seed)
     Graph g(n, w_max, k, obstacle_d, seed);
 
-    // 2. Run & time solver
-    const auto t0 = std::chrono::steady_clock::now();
-    FloodField serial_ff = compute_flood_field_serial(g, a);
-    const auto t1 = std::chrono::steady_clock::now();
+    if (mode == SOLVER_MODE::DIJKSTRA || mode == SOLVER_MODE::DIAL) {
+        if (rank == 0) {
+            ALGORITHM a = (mode == SOLVER_MODE::DIJKSTRA) ? ALGORITHM::DIJKSTRA : ALGORITHM::DIAL;
+            const auto t0 = std::chrono::steady_clock::now();
+            FloodField serial_ff = compute_flood_field_serial(g, a);
+            const auto t1 = std::chrono::steady_clock::now();
+            const double serial_ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
 
-    const double serial_ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
+            std::cout << "=== Flood Field Benchmark ===\n"
+                      << "Algorithm      : " << mode_name(mode) << '\n'
+                      << "Grid size      : " << n << " x " << n << " (" << g.p.size << " cells)\n"
+                      << "Target cell    : " << g.p.t << " (row " << (g.p.t / n) << ", col " << (g.p.t % n) << ")\n"
+                      << "Obstacle ratio : " << g.p.obstacle_d << "\n"
+                      << "Reachable cells: " << serial_ff.reachable_cells << " / " << g.p.size << "\n"
+                      << "Duration       : " << format_duration(serial_ns) << "\n";
 
-    std::cout << "=== Flood Field Benchmark ===\n"
-              << "Algorithm      : " << print_algorithm(a) << '\n'
-              << "Grid size      : " << n << " x " << n << " (" << g.p.size << " cells)\n"
-              << "Target cell    : " << g.p.t << " (row " << (g.p.t / n) << ", col " << (g.p.t % n) << ")\n"
-              << "Obstacle ratio : " << g.p.obstacle_d << "\n"
-              << "Reachable cells: " << serial_ff.reachable_cells << " / " << g.p.size << "\n"
-              << "Duration       : " << format_duration(serial_ns) << "\n";
+            if (do_trace) {
+                FloodField traced_ff = compute_flood_field_serial_traced(g, a);
+                export_csv(g, traced_ff, trace_filename(mode, 0, 1), true, out_dir);
+            } else if (do_export) {
+                export_csv(g, serial_ff, trace_filename(mode, 0, 1), false, out_dir);
+            }
+        }
+    } else {
+        ParallelConfig cfg;
+        cfg.backend = (mode == SOLVER_MODE::OMP) ? PARALLEL_BACKEND::OPENMP : PARALLEL_BACKEND::MPI;
+        cfg.delta = delta;
+        cfg.num_threads = num_threads;
 
-    // TODO: Run parallel Delta-Stepping here and verify `parallel_ff.dist == serial_ff.dist`
+        ParallelResult par_res = compute_flood_field_parallel(g, cfg);
 
-    if (do_trace) {
-        FloodField traced_ff = compute_flood_field_serial_traced(g, a);
-        export_csv(g, traced_ff, a, true, out_dir);
-    } else if (do_export) {
-        export_csv(g, serial_ff, a, false, out_dir);
+        if (rank == 0) {
+            double serial_ns = 0.0;
+            bool ok = true;
+            std::int64_t mismatch_idx = -1;
+
+            if (!skip_verify) {
+                const auto s0 = std::chrono::steady_clock::now();
+                FloodField serial_ff = compute_flood_field_serial(g, ALGORITHM::DIAL);
+                const auto s1 = std::chrono::steady_clock::now();
+                serial_ns = std::chrono::duration<double, std::nano>(s1 - s0).count();
+                ok = verify_distances(serial_ff, par_res.ff, mismatch_idx);
+                par_res.metrics.verified = ok;
+            }
+
+            std::cout << "=== Flood Field Benchmark ===\n"
+                      << "Algorithm      : " << par_res.metrics.backend_name << '\n'
+                      << "Workers        : " << par_res.metrics.workers << '\n'
+                      << "Delta (bucket) : " << par_res.metrics.delta_used << '\n'
+                      << "Grid size      : " << n << " x " << n << " (" << g.p.size << " cells)\n"
+                      << "Target cell    : " << g.p.t << " (row " << (g.p.t / n) << ", col " << (g.p.t % n) << ")\n"
+                      << "Obstacle ratio : " << g.p.obstacle_d << "\n"
+                      << "Reachable cells: " << par_res.ff.reachable_cells << " / " << g.p.size << "\n"
+                      << "Bucket steps   : " << par_res.metrics.bucket_steps << " (light phases: " << par_res.metrics.light_phases << ")\n"
+                      << "Duration       : " << format_duration(par_res.metrics.elapsed_ns) << "\n";
+
+            if (!skip_verify) {
+                std::cout << "Serial Dial ref: " << format_duration(serial_ns)
+                          << " (Speedup: " << std::fixed << std::setprecision(2)
+                          << (serial_ns / par_res.metrics.elapsed_ns) << "x)\n";
+                if (ok) {
+                    std::cout << "Verification   : PASS (exact match with serial shortest paths)\n";
+                } else {
+                    std::cerr << "Verification   : FAIL at cell " << mismatch_idx << "!\n";
+                }
+            }
+        }
+
+        if (do_trace) {
+            ParallelResult traced_res = compute_flood_field_parallel_traced(g, cfg);
+            if (rank == 0) {
+                const std::string tfile = trace_filename(mode, traced_res.metrics.delta_used, traced_res.metrics.workers);
+                export_csv(g, traced_res.ff, tfile, true, out_dir);
+            }
+        } else if (do_export && rank == 0) {
+            const std::string tfile = trace_filename(mode, par_res.metrics.delta_used, par_res.metrics.workers);
+            export_csv(g, par_res.ff, tfile, false, out_dir);
+        }
     }
 
+#ifdef USE_MPI
+    MPI_Finalize();
+#endif
     return 0;
 }
