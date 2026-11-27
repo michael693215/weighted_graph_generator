@@ -1,8 +1,12 @@
 #include "serial_dijkstra.hpp"
+#include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <limits>
 #include <queue>
+#include <stdexcept>
 #include <utility>
+#include <vector>
 
 namespace {
 
@@ -11,6 +15,9 @@ FloodField run_dijkstra(const Graph& g) {
     FloodField ff;
     if (g.p.size <= 0) {
         return ff;
+    }
+    if (static_cast<std::uint64_t>(g.p.size) > std::numeric_limits<std::uint32_t>::max()) {
+        throw std::runtime_error("Grid cell count exceeds uint32_t index limit.");
     }
 
     ff.n = static_cast<std::int64_t>(std::llround(std::sqrt(static_cast<double>(g.p.size))));
@@ -25,13 +32,13 @@ FloodField run_dijkstra(const Graph& g) {
         return ff;
     }
 
-    using State = std::pair<std::uint64_t, std::int64_t>;
+    using State = std::pair<std::uint32_t, std::uint32_t>;
     std::priority_queue<State, std::vector<State>, std::greater<State>> pq;
 
     const auto t0 = std::chrono::steady_clock::now();
 
     ff.dist[target] = 0;
-    pq.emplace(0, target);
+    pq.emplace(0, static_cast<std::uint32_t>(target));
 
     constexpr std::int64_t dr[4] = {-1, 0, 1, 0};
     constexpr std::int64_t dc[4] = {0, 1, 0, -1};
@@ -51,9 +58,9 @@ FloodField run_dijkstra(const Graph& g) {
             ff.settle_ns[curr] = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
         }
 
-        const std::int64_t r = curr / ff.n;
-        const std::int64_t c = curr % ff.n;
-        const std::uint64_t step_cost = static_cast<std::uint64_t>(g.weights[curr]);
+        const std::int64_t r = static_cast<std::int64_t>(curr) / ff.n;
+        const std::int64_t c = static_cast<std::int64_t>(curr) % ff.n;
+        const std::uint32_t step_cost = static_cast<std::uint32_t>(g.weights[curr]);
 
         for (int i = 0; i < 4; ++i) {
             const std::int64_t nr = r + dr[i];
@@ -63,12 +70,12 @@ FloodField run_dijkstra(const Graph& g) {
                 continue;
             }
 
-            const std::int64_t next = nr * ff.n + nc;
+            const std::uint32_t next = static_cast<std::uint32_t>(nr * ff.n + nc);
             if (g.weights[next] == 0) {
                 continue;
             }
 
-            const std::uint64_t new_dist = d + step_cost;
+            const std::uint32_t new_dist = d + step_cost;
             if (new_dist < ff.dist[next]) {
                 ff.dist[next] = new_dist;
                 ff.dir[next] = flow_to_curr[i];
@@ -86,6 +93,9 @@ FloodField run_dial(const Graph& g) {
     if (g.p.size <= 0) {
         return ff;
     }
+    if (static_cast<std::uint64_t>(g.p.size) > std::numeric_limits<std::uint32_t>::max()) {
+        throw std::runtime_error("Grid cell count exceeds uint32_t index limit.");
+    }
 
     ff.n = static_cast<std::int64_t>(std::llround(std::sqrt(static_cast<double>(g.p.size))));
     ff.dist.assign(g.p.size, FloodField::INF);
@@ -100,33 +110,33 @@ FloodField run_dial(const Graph& g) {
     }
 
     // Max edge cost = max cell weight (cost of leaving a cell).
-    std::uint64_t max_w = 0;
+    std::uint32_t max_w = 0;
     for (std::int64_t i = 0; i < g.p.size; ++i) {
-        max_w = std::max(max_w, static_cast<std::uint64_t>(g.weights[i]));
+        max_w = std::max(max_w, static_cast<std::uint32_t>(g.weights[i]));
     }
 
     // Circular bucket queue: all pending distances lie in [d, d + max_w].
-    const std::uint64_t num_buckets = max_w + 1;
-    std::vector<std::vector<std::int64_t>> buckets(num_buckets);
+    const std::uint32_t num_buckets = max_w + 1;
+    std::vector<std::vector<std::uint32_t>> buckets(num_buckets);
     std::uint64_t pending = 0; // entries currently stored across all buckets
 
     const auto t0 = std::chrono::steady_clock::now();
 
     ff.dist[target] = 0;
-    buckets[0].push_back(target);
+    buckets[0].push_back(static_cast<std::uint32_t>(target));
     ++pending;
 
     constexpr std::int64_t dr[4] = {-1, 0, 1, 0};
     constexpr std::int64_t dc[4] = {0, 1, 0, -1};
     constexpr std::int8_t flow_to_curr[4] = {2, 3, 0, 1};
 
-    for (std::uint64_t d = 0; pending > 0; ++d) {
+    for (std::uint32_t d = 0; pending > 0; ++d) {
         auto& bucket = buckets[d % num_buckets];
 
         // Edge costs are >= 1, so nothing processed here is ever added back
         // to this same bucket; popping until empty is safe.
         while (!bucket.empty()) {
-            const std::int64_t curr = bucket.back();
+            const std::uint32_t curr = bucket.back();
             bucket.pop_back();
             --pending;
 
@@ -141,9 +151,9 @@ FloodField run_dial(const Graph& g) {
                     std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
             }
 
-            const std::int64_t r = curr / ff.n;
-            const std::int64_t c = curr % ff.n;
-            const std::uint64_t step_cost = static_cast<std::uint64_t>(g.weights[curr]);
+            const std::int64_t r = static_cast<std::int64_t>(curr) / ff.n;
+            const std::int64_t c = static_cast<std::int64_t>(curr) % ff.n;
+            const std::uint32_t step_cost = static_cast<std::uint32_t>(g.weights[curr]);
 
             for (int i = 0; i < 4; ++i) {
                 const std::int64_t nr = r + dr[i];
@@ -153,12 +163,12 @@ FloodField run_dial(const Graph& g) {
                     continue;
                 }
 
-                const std::int64_t next = nr * ff.n + nc;
+                const std::uint32_t next = static_cast<std::uint32_t>(nr * ff.n + nc);
                 if (g.weights[next] == 0) {
                     continue;
                 }
 
-                const std::uint64_t new_dist = d + step_cost;
+                const std::uint32_t new_dist = d + step_cost;
                 if (new_dist < ff.dist[next]) {
                     ff.dist[next] = new_dist;
                     ff.dir[next] = flow_to_curr[i];
@@ -175,11 +185,11 @@ FloodField run_dial(const Graph& g) {
 } // namespace
 
 FloodField compute_flood_field_serial(const Graph& g, ALGORITHM a) {
-    return a == ALGORITHM::DIJKSTRA ? run_dijkstra<false>(g) 
-        : run_dial<false>(g);
+    return a == ALGORITHM::DIJKSTRA ? run_dijkstra<false>(g)
+                                    : run_dial<false>(g);
 }
 
 FloodField compute_flood_field_serial_traced(const Graph& g, ALGORITHM a) {
-    return a == ALGORITHM::DIJKSTRA ? run_dijkstra<true>(g) 
-        : run_dial<true>(g);
+    return a == ALGORITHM::DIJKSTRA ? run_dijkstra<true>(g)
+                                    : run_dial<true>(g);
 }

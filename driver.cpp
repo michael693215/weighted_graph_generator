@@ -1,4 +1,5 @@
 #include "graph.hpp"
+#include "metrics.hpp"
 #include "parallel_dijkstra.hpp"
 #include "serial_dijkstra.hpp"
 #include <algorithm>
@@ -118,20 +119,6 @@ void export_csv(const Graph& g,
     }
 }
 
-bool verify_distances(const FloodField& expected, const FloodField& actual, std::int64_t& mismatch_idx) {
-    if (expected.dist.size() != actual.dist.size()) {
-        mismatch_idx = 0;
-        return false;
-    }
-    for (std::size_t i = 0; i < expected.dist.size(); ++i) {
-        if (expected.dist[i] != actual.dist[i]) {
-            mismatch_idx = static_cast<std::int64_t>(i);
-            return false;
-        }
-    }
-    return true;
-}
-
 } // namespace
 
 int main(int argc, char* argv[]) {
@@ -195,10 +182,18 @@ int main(int argc, char* argv[]) {
     if (mode == SOLVER_MODE::DIJKSTRA || mode == SOLVER_MODE::DIAL) {
         if (rank == 0) {
             ALGORITHM a = (mode == SOLVER_MODE::DIJKSTRA) ? ALGORITHM::DIJKSTRA : ALGORITHM::DIAL;
+
+            const ResourceSnapshot cpu_start = capture_cpu_snapshot();
             const auto t0 = std::chrono::steady_clock::now();
             FloodField serial_ff = compute_flood_field_serial(g, a);
             const auto t1 = std::chrono::steady_clock::now();
             const double serial_ns = std::chrono::duration<double, std::nano>(t1 - t0).count();
+            const ResourceStats rstats = finalize_resource_stats(cpu_start, serial_ns);
+
+            bool ok = true;
+            if (!skip_verify) {
+                ok = verify_bellman_optimality(g, serial_ff);
+            }
 
             std::cout << "=== Flood Field Benchmark ===\n"
                       << "Algorithm      : " << mode_name(mode) << '\n'
@@ -206,7 +201,16 @@ int main(int argc, char* argv[]) {
                       << "Target cell    : " << g.p.t << " (row " << (g.p.t / n) << ", col " << (g.p.t % n) << ")\n"
                       << "Obstacle ratio : " << g.p.obstacle_d << "\n"
                       << "Reachable cells: " << serial_ff.reachable_cells << " / " << g.p.size << "\n"
-                      << "Duration       : " << format_duration(serial_ns) << "\n";
+                      << "Duration       : " << format_duration(serial_ns) << "\n"
+                      << "Peak RSS       : " << std::fixed << std::setprecision(2) << rstats.peak_rss_mb() << " MB\n"
+                      << "CPU Load       : " << rstats.effective_cores() << " eff. cores ("
+                      << rstats.cpu_efficiency_pct(1) << "% of 1)\n";
+
+            if (!skip_verify) {
+                std::cout << "Verification   : "
+                          << (ok ? "PASS (Bellman optimality verified)" : "FAIL (Bellman optimality violated)")
+                          << "\n";
+            }
 
             if (do_trace) {
                 FloodField traced_ff = compute_flood_field_serial_traced(g, a);
@@ -221,19 +225,24 @@ int main(int argc, char* argv[]) {
         cfg.delta = delta;
         cfg.num_threads = num_threads;
 
+        const ResourceSnapshot cpu_start = capture_cpu_snapshot();
         ParallelResult par_res = compute_flood_field_parallel(g, cfg);
+        ResourceStats rstats = finalize_resource_stats(cpu_start, par_res.metrics.elapsed_ns);
+
+        std::uint64_t max_rss_bytes = rstats.peak_rss_bytes;
+        std::uint64_t total_rss_bytes = rstats.peak_rss_bytes;
+#ifdef USE_MPI
+        if (mode == SOLVER_MODE::MPI_SOLVER) {
+            std::uint64_t local_rss = rstats.peak_rss_bytes;
+            MPI_Reduce(&local_rss, &max_rss_bytes, 1, MPI_UINT64_T, MPI_MAX, 0, MPI_COMM_WORLD);
+            MPI_Reduce(&local_rss, &total_rss_bytes, 1, MPI_UINT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+        }
+#endif
 
         if (rank == 0) {
-            double serial_ns = 0.0;
             bool ok = true;
-            std::int64_t mismatch_idx = -1;
-
             if (!skip_verify) {
-                const auto s0 = std::chrono::steady_clock::now();
-                FloodField serial_ff = compute_flood_field_serial(g, ALGORITHM::DIAL);
-                const auto s1 = std::chrono::steady_clock::now();
-                serial_ns = std::chrono::duration<double, std::nano>(s1 - s0).count();
-                ok = verify_distances(serial_ff, par_res.ff, mismatch_idx);
+                ok = verify_bellman_optimality(g, par_res.ff);
                 par_res.metrics.verified = ok;
             }
 
@@ -245,17 +254,27 @@ int main(int argc, char* argv[]) {
                       << "Target cell    : " << g.p.t << " (row " << (g.p.t / n) << ", col " << (g.p.t % n) << ")\n"
                       << "Obstacle ratio : " << g.p.obstacle_d << "\n"
                       << "Reachable cells: " << par_res.ff.reachable_cells << " / " << g.p.size << "\n"
-                      << "Bucket steps   : " << par_res.metrics.bucket_steps << " (light phases: " << par_res.metrics.light_phases << ")\n"
+                      << "Bucket steps   : " << par_res.metrics.bucket_steps
+                      << " (light phases: " << par_res.metrics.light_phases << ")\n"
                       << "Duration       : " << format_duration(par_res.metrics.elapsed_ns) << "\n";
 
+            std::cout << std::fixed << std::setprecision(2);
+            if (mode == SOLVER_MODE::MPI_SOLVER) {
+                std::cout << "Peak RSS       : " << (static_cast<double>(max_rss_bytes) / (1024.0 * 1024.0))
+                          << " MB max/rank (" << (static_cast<double>(total_rss_bytes) / (1024.0 * 1024.0))
+                          << " MB total)\n";
+            } else {
+                std::cout << "Peak RSS       : " << rstats.peak_rss_mb() << " MB\n"
+                          << "CPU Load       : " << rstats.effective_cores() << " eff. cores ("
+                          << rstats.cpu_efficiency_pct(par_res.metrics.workers) << "% of "
+                          << par_res.metrics.workers << ")\n";
+            }
+
             if (!skip_verify) {
-                std::cout << "Serial Dial ref: " << format_duration(serial_ns)
-                          << " (Speedup: " << std::fixed << std::setprecision(2)
-                          << (serial_ns / par_res.metrics.elapsed_ns) << "x)\n";
                 if (ok) {
-                    std::cout << "Verification   : PASS (exact match with serial shortest paths)\n";
+                    std::cout << "Verification   : PASS (Bellman optimality verified)\n";
                 } else {
-                    std::cerr << "Verification   : FAIL at cell " << mismatch_idx << "!\n";
+                    std::cerr << "Verification   : FAIL (Bellman optimality violated)!\n";
                 }
             }
         }

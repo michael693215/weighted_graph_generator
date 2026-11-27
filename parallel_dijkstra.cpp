@@ -20,23 +20,22 @@ namespace {
 constexpr std::int64_t DR[4] = {-1, 0, 1, 0};
 constexpr std::int64_t DC[4] = {0, 1, 0, -1};
 
-std::uint64_t resolve_delta(const Graph& g, std::uint64_t requested_delta) {
+std::uint32_t resolve_delta(const Graph& g, std::uint64_t requested_delta) {
     if (requested_delta > 0) {
-        return requested_delta;
+        return static_cast<std::uint32_t>(requested_delta);
     }
-    // For 2D grids, ~1.5x max_w gives wide enough wavefronts to amortize barriers
-    std::uint64_t max_w = 1;
+    std::uint32_t max_w = 1;
     for (std::int64_t i = 0; i < g.p.size; ++i) {
         if (g.weights[i] > max_w) {
             max_w = g.weights[i];
         }
     }
-    return std::max<std::uint64_t>(1, (max_w * 3) / 2);
+    return std::max<std::uint32_t>(1, (max_w * 3) / 2);
 }
 
-// Lock-free atomic min directly on raw uint64_t array (zero std::atomic init overhead)
-inline bool atomic_min_u64(std::uint64_t* addr, std::uint64_t new_val) {
-    std::uint64_t prev = __atomic_load_n(addr, __ATOMIC_RELAXED);
+// Lock-free 32-bit atomic min directly on raw uint32_t array
+inline bool atomic_min_u32(std::uint32_t* addr, std::uint32_t new_val) {
+    std::uint32_t prev = __atomic_load_n(addr, __ATOMIC_RELAXED);
     while (new_val < prev) {
         if (__atomic_compare_exchange_n(addr, &prev, new_val, true,
                                         __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
@@ -46,7 +45,6 @@ inline bool atomic_min_u64(std::uint64_t* addr, std::uint64_t new_val) {
     return false;
 }
 
-// Compute flow directions after distances converge to avoid torn (dist, dir) writes
 void compute_directions_omp(const Graph& g, FloodField& ff, int num_threads) {
     const std::int64_t n = ff.n;
     const std::int64_t target = g.p.t;
@@ -71,7 +69,7 @@ void compute_directions_omp(const Graph& g, FloodField& ff, int num_threads) {
 
         const std::int64_t r = idx / n;
         const std::int64_t c = idx % n;
-        std::uint64_t best_cost = FloodField::INF;
+        std::uint32_t best_cost = FloodField::INF;
         std::int8_t best_dir = -1;
 
         for (int i = 0; i < 4; ++i) {
@@ -84,7 +82,7 @@ void compute_directions_omp(const Graph& g, FloodField& ff, int num_threads) {
             if (g.weights[nb] == 0 || ff.dist[nb] == FloodField::INF) {
                 continue;
             }
-            const std::uint64_t cand = ff.dist[nb] + static_cast<std::uint64_t>(g.weights[nb]);
+            const std::uint32_t cand = ff.dist[nb] + static_cast<std::uint32_t>(g.weights[nb]);
             if (cand < best_cost) {
                 best_cost = cand;
                 best_dir = static_cast<std::int8_t>(i);
@@ -96,9 +94,10 @@ void compute_directions_omp(const Graph& g, FloodField& ff, int num_threads) {
     ff.reachable_cells = reachable;
 }
 
+// Compact 8-byte queue entry (supports grids up to 65,536 x 65,536)
 struct QueueEntry {
-    std::uint64_t dist;
-    std::int64_t vertex;
+    std::uint32_t dist;
+    std::uint32_t vertex;
 };
 
 template <bool RecordTrace>
@@ -108,6 +107,9 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 
     if (g.p.size <= 0) {
         return res;
+    }
+    if (static_cast<std::uint64_t>(g.p.size) > std::numeric_limits<std::uint32_t>::max()) {
+        throw std::runtime_error("Grid cell count exceeds uint32_t index limit.");
     }
 
     const std::int64_t n = static_cast<std::int64_t>(std::llround(std::sqrt(static_cast<double>(g.p.size))));
@@ -133,10 +135,10 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 #endif
     res.metrics.workers = threads;
 
-    const std::uint64_t delta = resolve_delta(g, cfg.delta);
+    const std::uint32_t delta = resolve_delta(g, cfg.delta);
     res.metrics.delta_used = delta;
 
-    std::uint64_t max_w = 1;
+    std::uint32_t max_w = 1;
     for (std::int64_t i = 0; i < g.p.size; ++i) {
         if (g.weights[i] > max_w) {
             max_w = g.weights[i];
@@ -145,18 +147,14 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 
     const std::size_t num_buckets = static_cast<std::size_t>((max_w / delta) + 3);
 
-    // Thread-local buckets store (tentative_dist, vertex) pairs so stale entries are skipped safely
     std::vector<std::vector<std::vector<QueueEntry>>> local_buckets(
         threads, std::vector<std::vector<QueueEntry>>(num_buckets));
-
-    // Per-thread deferred heavy vertices for the current bucket
     std::vector<std::vector<QueueEntry>> local_heavy(threads);
 
     std::vector<QueueEntry> shared_frontier;
     std::vector<std::size_t> thread_offsets(threads + 1, 0);
 
-    // Shared loop control state across the single persistent parallel region
-    std::uint64_t current_bucket = 0;
+    std::uint32_t current_bucket = 0;
     std::size_t active_slot = 0;
     std::size_t total_items = 0;
     bool done = false;
@@ -167,11 +165,10 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 
     const auto t0 = std::chrono::steady_clock::now();
 
-    std::uint64_t* dist_ptr = res.ff.dist.data();
+    std::uint32_t* dist_ptr = res.ff.dist.data();
     dist_ptr[target] = 0;
-    local_buckets[0][0].push_back({0, target});
+    local_buckets[0][0].push_back({0, static_cast<std::uint32_t>(target)});
 
-    // Single persistent parallel region eliminates thousands of thread fork/joins
     #pragma omp parallel num_threads(threads)
     {
         int tid = 0;
@@ -180,7 +177,6 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 #endif
 
         while (true) {
-            // Single thread selects the next non-empty bucket or next light/heavy phase
             #pragma omp single
             {
                 if constexpr (RecordTrace) {
@@ -189,8 +185,6 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                 }
 
                 in_heavy_phase = false;
-
-                // Check if current bucket still has light items to drain
                 std::size_t slot = static_cast<std::size_t>(current_bucket % num_buckets);
                 thread_offsets[0] = 0;
                 for (int t = 0; t < threads; ++t) {
@@ -205,7 +199,6 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                         shared_frontier.resize(total_items);
                     }
                 } else {
-                    // Current bucket's light phase is drained; check if heavy vertices were deferred
                     thread_offsets[0] = 0;
                     for (int t = 0; t < threads; ++t) {
                         thread_offsets[t + 1] = thread_offsets[t] + local_heavy[t].size();
@@ -218,10 +211,9 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                             shared_frontier.resize(total_items);
                         }
                     } else {
-                        // Advance to the next non-empty bucket
                         bool found = false;
                         for (std::size_t offset = 1; offset <= num_buckets; ++offset) {
-                            const std::uint64_t cand_b = current_bucket + offset;
+                            const std::uint32_t cand_b = current_bucket + static_cast<std::uint32_t>(offset);
                             const std::size_t cand_slot = static_cast<std::size_t>(cand_b % num_buckets);
                             thread_offsets[0] = 0;
                             for (int t = 0; t < threads; ++t) {
@@ -245,13 +237,12 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                         }
                     }
                 }
-            } // implicit barrier after omp single ensures `phase_ns` and loop state are visible to all threads
+            }
 
             if (done) {
                 break;
             }
 
-            // Flatten thread-local queues into shared_frontier in parallel
             if (!in_heavy_phase) {
                 auto& my_vec = local_buckets[tid][active_slot];
                 if (!my_vec.empty()) {
@@ -272,21 +263,18 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 
             #pragma omp barrier
 
-            // Relax frontier in parallel
             #pragma omp for schedule(static)
             for (std::size_t i = 0; i < total_items; ++i) {
                 const QueueEntry entry = shared_frontier[i];
-                const std::int64_t u = entry.vertex;
-                const std::uint64_t d_u = __atomic_load_n(&dist_ptr[u], __ATOMIC_RELAXED);
+                const std::uint32_t u = entry.vertex;
+                const std::uint32_t d_u = __atomic_load_n(&dist_ptr[u], __ATOMIC_RELAXED);
 
-                // Skip stale queue entries
                 if (entry.dist > d_u) {
                     continue;
                 }
 
-                const std::uint64_t step_cost = static_cast<std::uint64_t>(g.weights[u]);
+                const std::uint32_t step_cost = static_cast<std::uint32_t>(g.weights[u]);
 
-                // During light phase, defer heavy vertices to the bucket's heavy phase
                 if (!in_heavy_phase && step_cost > delta) {
                     local_heavy[tid].push_back({d_u, u});
                     continue;
@@ -296,8 +284,8 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                     res.ff.settle_ns[u] = phase_ns;
                 }
 
-                const std::int64_t r = u / n;
-                const std::int64_t c = u % n;
+                const std::int64_t r = static_cast<std::int64_t>(u) / n;
+                const std::int64_t c = static_cast<std::int64_t>(u) % n;
 
                 for (int dir_i = 0; dir_i < 4; ++dir_i) {
                     const std::int64_t nr = r + DR[dir_i];
@@ -305,18 +293,18 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                     if (nr < 0 || nr >= n || nc < 0 || nc >= n) {
                         continue;
                     }
-                    const std::int64_t v = nr * n + nc;
+                    const std::uint32_t v = static_cast<std::uint32_t>(nr * n + nc);
                     if (g.weights[v] == 0) {
                         continue;
                     }
 
-                    const std::uint64_t new_dist = d_u + step_cost;
-                    if (atomic_min_u64(&dist_ptr[v], new_dist)) {
-                        const std::uint64_t target_b = new_dist / delta;
+                    const std::uint32_t new_dist = d_u + step_cost;
+                    if (atomic_min_u32(&dist_ptr[v], new_dist)) {
+                        const std::uint32_t target_b = new_dist / delta;
                         local_buckets[tid][target_b % num_buckets].push_back({new_dist, v});
                     }
                 }
-            } // implicit barrier after omp for
+            }
         }
     }
 
@@ -348,10 +336,9 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
     }
 
     const std::int64_t n = static_cast<std::int64_t>(std::llround(std::sqrt(static_cast<double>(g.p.size))));
-    const std::uint64_t delta = resolve_delta(g, cfg.delta);
+    const std::uint32_t delta = resolve_delta(g, cfg.delta);
     res.metrics.delta_used = delta;
 
-    // 1D row decomposition across MPI ranks
     const std::int64_t base_rows = n / world_size;
     const std::int64_t rem_rows = n % world_size;
     const std::int64_t r_start = rank * base_rows + std::min<std::int64_t>(rank, rem_rows);
@@ -368,7 +355,7 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
         return static_cast<int>(rem_rows + (row - split) / base_rows);
     };
 
-    std::uint64_t max_w = 1;
+    std::uint32_t max_w = 1;
     for (std::int64_t i = 0; i < g.p.size; ++i) {
         if (g.weights[i] > max_w) {
             max_w = g.weights[i];
@@ -376,7 +363,7 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
     }
     const std::size_t num_buckets = static_cast<std::size_t>((max_w / delta) + 3);
 
-    std::vector<std::uint64_t> local_dist(local_cells, FloodField::INF);
+    std::vector<std::uint32_t> local_dist(local_cells, FloodField::INF);
     std::vector<std::int64_t> local_trace;
     if constexpr (RecordTrace) {
         local_trace.assign(local_cells, -1);
@@ -393,13 +380,13 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
         if (tr >= r_start && tr < r_end) {
             const std::int64_t l_idx = target - cell_offset;
             local_dist[l_idx] = 0;
-            buckets[0].push_back({0, target});
+            buckets[0].push_back({0, static_cast<std::uint32_t>(target)});
         }
     }
 
     struct RemoteUpdate {
-        std::int64_t global_idx;
-        std::uint64_t new_dist;
+        std::uint32_t global_idx;
+        std::uint32_t new_dist;
     };
 
     std::vector<std::vector<RemoteUpdate>> send_bufs(world_size);
@@ -443,32 +430,32 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
                       MPI_COMM_WORLD);
 
         for (const auto& upd : flat_recv) {
-            const std::int64_t l_idx = upd.global_idx - cell_offset;
+            const std::int64_t l_idx = static_cast<std::int64_t>(upd.global_idx) - cell_offset;
             if (upd.new_dist < local_dist[l_idx]) {
                 local_dist[l_idx] = upd.new_dist;
-                const std::uint64_t target_b = upd.new_dist / delta;
+                const std::uint32_t target_b = upd.new_dist / delta;
                 buckets[target_b % num_buckets].push_back({upd.new_dist, upd.global_idx});
             }
         }
     };
 
-    std::uint64_t current_bucket = 0;
+    std::uint32_t current_bucket = 0;
     std::uint64_t bucket_steps = 0;
     std::uint64_t light_phases = 0;
     std::vector<QueueEntry> heavy_candidates;
 
     while (true) {
-        std::uint64_t local_next = FloodField::INF;
+        std::uint32_t local_next = FloodField::INF;
         for (std::size_t offset = 0; offset < num_buckets; ++offset) {
-            const std::uint64_t cand_b = current_bucket + offset;
+            const std::uint32_t cand_b = current_bucket + static_cast<std::uint32_t>(offset);
             if (!buckets[cand_b % num_buckets].empty()) {
                 local_next = cand_b;
                 break;
             }
         }
 
-        std::uint64_t global_next = FloodField::INF;
-        MPI_Allreduce(&local_next, &global_next, 1, MPI_UINT64_T, MPI_MIN, MPI_COMM_WORLD);
+        std::uint32_t global_next = FloodField::INF;
+        MPI_Allreduce(&local_next, &global_next, 1, MPI_UINT32_T, MPI_MIN, MPI_COMM_WORLD);
         if (global_next == FloodField::INF) {
             break;
         }
@@ -478,7 +465,6 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
         const std::size_t slot = static_cast<std::size_t>(current_bucket % num_buckets);
         heavy_candidates.clear();
 
-        // Phase 1: Drain light vertices across all MPI ranks synchronously
         while (true) {
             int local_has_work = buckets[slot].empty() ? 0 : 1;
             int global_has_work = 0;
@@ -498,14 +484,14 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
             }
 
             for (const auto& entry : frontier) {
-                const std::int64_t u = entry.vertex;
-                const std::int64_t l_u = u - cell_offset;
-                const std::uint64_t d_u = local_dist[l_u];
+                const std::uint32_t u = entry.vertex;
+                const std::int64_t l_u = static_cast<std::int64_t>(u) - cell_offset;
+                const std::uint32_t d_u = local_dist[l_u];
                 if (entry.dist > d_u) {
                     continue;
                 }
 
-                const std::uint64_t step_cost = static_cast<std::uint64_t>(g.weights[u]);
+                const std::uint32_t step_cost = static_cast<std::uint32_t>(g.weights[u]);
                 if (step_cost > delta) {
                     heavy_candidates.push_back({d_u, u});
                     continue;
@@ -515,25 +501,25 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
                     local_trace[l_u] = phase_ns;
                 }
 
-                const std::int64_t r = u / n;
-                const std::int64_t c = u % n;
+                const std::int64_t r = static_cast<std::int64_t>(u) / n;
+                const std::int64_t c = static_cast<std::int64_t>(u) % n;
                 for (int dir_i = 0; dir_i < 4; ++dir_i) {
                     const std::int64_t nr = r + DR[dir_i];
                     const std::int64_t nc = c + DC[dir_i];
                     if (nr < 0 || nr >= n || nc < 0 || nc >= n) {
                         continue;
                     }
-                    const std::int64_t v = nr * n + nc;
+                    const std::uint32_t v = static_cast<std::uint32_t>(nr * n + nc);
                     if (g.weights[v] == 0) {
                         continue;
                     }
 
-                    const std::uint64_t new_dist = d_u + step_cost;
+                    const std::uint32_t new_dist = d_u + step_cost;
                     if (nr >= r_start && nr < r_end) {
-                        const std::int64_t l_v = v - cell_offset;
+                        const std::int64_t l_v = static_cast<std::int64_t>(v) - cell_offset;
                         if (new_dist < local_dist[l_v]) {
                             local_dist[l_v] = new_dist;
-                            const std::uint64_t target_b = new_dist / delta;
+                            const std::uint32_t target_b = new_dist / delta;
                             buckets[target_b % num_buckets].push_back({new_dist, v});
                         }
                     } else {
@@ -545,7 +531,6 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
             exchange_remote_updates();
         }
 
-        // Phase 2: Relax heavy vertices once across all ranks
         std::int64_t heavy_phase_ns = 0;
         if constexpr (RecordTrace) {
             const auto now = std::chrono::steady_clock::now();
@@ -553,9 +538,9 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
         }
 
         for (const auto& entry : heavy_candidates) {
-            const std::int64_t u = entry.vertex;
-            const std::int64_t l_u = u - cell_offset;
-            const std::uint64_t d_u = local_dist[l_u];
+            const std::uint32_t u = entry.vertex;
+            const std::int64_t l_u = static_cast<std::int64_t>(u) - cell_offset;
+            const std::uint32_t d_u = local_dist[l_u];
             if (entry.dist > d_u) {
                 continue;
             }
@@ -564,26 +549,26 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
                 local_trace[l_u] = heavy_phase_ns;
             }
 
-            const std::uint64_t step_cost = static_cast<std::uint64_t>(g.weights[u]);
-            const std::int64_t r = u / n;
-            const std::int64_t c = u % n;
+            const std::uint32_t step_cost = static_cast<std::uint32_t>(g.weights[u]);
+            const std::int64_t r = static_cast<std::int64_t>(u) / n;
+            const std::int64_t c = static_cast<std::int64_t>(u) % n;
             for (int dir_i = 0; dir_i < 4; ++dir_i) {
                 const std::int64_t nr = r + DR[dir_i];
                 const std::int64_t nc = c + DC[dir_i];
                 if (nr < 0 || nr >= n || nc < 0 || nc >= n) {
                     continue;
                 }
-                const std::int64_t v = nr * n + nc;
+                const std::uint32_t v = static_cast<std::uint32_t>(nr * n + nc);
                 if (g.weights[v] == 0) {
                     continue;
                 }
 
-                const std::uint64_t new_dist = d_u + step_cost;
+                const std::uint32_t new_dist = d_u + step_cost;
                 if (nr >= r_start && nr < r_end) {
-                    const std::int64_t l_v = v - cell_offset;
+                    const std::int64_t l_v = static_cast<std::int64_t>(v) - cell_offset;
                     if (new_dist < local_dist[l_v]) {
                         local_dist[l_v] = new_dist;
-                        const std::uint64_t target_b = new_dist / delta;
+                        const std::uint32_t target_b = new_dist / delta;
                         buckets[target_b % num_buckets].push_back({new_dist, v});
                     }
                 } else {
@@ -596,7 +581,6 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
         ++current_bucket;
     }
 
-    // Gather converged distances (and traces if enabled) to Rank 0
     std::vector<int> recv_cell_counts(world_size, 0);
     std::vector<int> cell_displs(world_size, 0);
     if (rank == 0) {
@@ -612,9 +596,9 @@ ParallelResult run_mpi_delta_stepping(const Graph& g, const ParallelConfig& cfg)
         }
     }
 
-    MPI_Gatherv(local_dist.data(), static_cast<int>(local_cells), MPI_UINT64_T,
+    MPI_Gatherv(local_dist.data(), static_cast<int>(local_cells), MPI_UINT32_T,
                 rank == 0 ? res.ff.dist.data() : nullptr,
-                recv_cell_counts.data(), cell_displs.data(), MPI_UINT64_T,
+                recv_cell_counts.data(), cell_displs.data(), MPI_UINT32_T,
                 0, MPI_COMM_WORLD);
 
     if constexpr (RecordTrace) {
