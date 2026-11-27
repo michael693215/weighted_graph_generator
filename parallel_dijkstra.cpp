@@ -54,52 +54,26 @@ inline bool atomic_relax_packed(std::uint32_t* addr,
     return false;
 }
 
-// Fixed-size 2-level hierarchical bitset:
-// - l0: 1 bit per cell (N^2 / 8 bytes)
-// - l1: 1 bit per 64 l0 words (4,096 cells per bit; fits in L1 cache)
-// Eliminates dynamic queue reallocations, duplicate pushes, and empty-word scans.
-struct HierarchicalBitset {
-    std::vector<std::uint64_t> l0;
-    std::vector<std::uint64_t> l1;
-
-    explicit HierarchicalBitset(std::size_t num_bits = 0) {
-        const std::size_t n0 = (num_bits + 63) / 64;
-        const std::size_t n1 = (n0 + 63) / 64;
-        l0.assign(n0, 0ULL);
-        l1.assign(n1, 0ULL);
+// Sets bit `idx` in a flat 64-bit word array.
+// Because atomic RMWs on the same word are totally ordered, strictly ONE thread
+// observes `prev == 0` and records `w0` in its thread-local active-block list.
+inline void set_bit_and_track_block(std::uint64_t* bits,
+                                    std::uint32_t idx,
+                                    std::vector<std::uint32_t>& local_blocks) noexcept {
+    const std::uint32_t w0 = idx >> 6;
+    const std::uint64_t m0 = 1ULL << (idx & 63u);
+    if (__atomic_fetch_or(&bits[w0], m0, __ATOMIC_RELAXED) == 0ULL) {
+        local_blocks.push_back(w0);
     }
+}
 
-    inline void set_non_atomic(std::uint32_t idx) noexcept {
-        const std::size_t w0 = static_cast<std::size_t>(idx) >> 6;
-        l0[w0] |= (1ULL << (idx & 63u));
-        l1[w0 >> 6] |= (1ULL << (w0 & 63u));
-    }
-
-    inline void set_atomic(std::uint32_t idx) noexcept {
-        const std::size_t w0 = static_cast<std::size_t>(idx) >> 6;
-        const std::uint64_t m0 = 1ULL << (idx & 63u);
-        if ((__atomic_fetch_or(&l0[w0], m0, __ATOMIC_RELAXED) & m0) == 0) {
-            const std::size_t w1 = w0 >> 6;
-            const std::uint64_t m1 = 1ULL << (w0 & 63u);
-            if ((__atomic_load_n(&l1[w1], __ATOMIC_RELAXED) & m1) == 0) {
-                __atomic_fetch_or(&l1[w1], m1, __ATOMIC_RELAXED);
-            }
-        }
-    }
-
-    void swap(HierarchicalBitset& other) noexcept {
-        l0.swap(other.l0);
-        l1.swap(other.l1);
-    }
+struct alignas(64) AlignedBlockVec {
+    std::vector<std::uint32_t> data;
 };
 
-struct alignas(64) ThreadLocalState {
+struct alignas(64) ThreadStats {
     std::int64_t reachable = 0;
     std::uint64_t min_bucket = std::numeric_limits<std::uint64_t>::max();
-    bool has_next = false;
-    bool has_future = false;
-    bool extracted = false;
-    bool rem_future = false;
 };
 
 template <bool RecordTrace>
@@ -147,13 +121,24 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
     }
 
     const std::size_t grid_size = static_cast<std::size_t>(g.p.size);
-    HierarchicalBitset active_bits(grid_size);
-    HierarchicalBitset next_bits(grid_size);
-    HierarchicalBitset future_bits(grid_size);
-    const std::size_t num_l1 = active_bits.l1.size();
+    const std::size_t num_words = (grid_size + 63) / 64;
 
-    std::vector<ThreadLocalState> thread_state(threads);
-    thread_state[0].reachable = 1; // Target cell
+    // Flat 1-bit-per-cell deduplication arrays (no l1 scan layer)
+    std::vector<std::uint64_t> active_bits(num_words, 0ULL);
+    std::vector<std::uint64_t> next_bits(num_words, 0ULL);
+    std::vector<std::uint64_t> future_bits(num_words, 0ULL);
+
+    // Compacted per-thread lists of non-zero 64-cell block indices (w0)
+    std::vector<AlignedBlockVec> active_chunks(threads);
+    std::vector<AlignedBlockVec> next_chunks(threads);
+    std::vector<AlignedBlockVec> future_chunks(threads);
+    std::vector<AlignedBlockVec> rem_chunks(threads);
+
+    std::vector<std::size_t> active_offsets(threads + 1, 0);
+    std::vector<std::size_t> future_offsets(threads + 1, 0);
+
+    std::vector<ThreadStats> thread_stats(threads);
+    thread_stats[0].reachable = 1; // Target cell
 
     constexpr std::uint64_t INF_BUCKET = std::numeric_limits<std::uint64_t>::max();
 
@@ -164,20 +149,39 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
     std::uint64_t cand_lower = 0;
     std::uint64_t cand_upper = 0;
 
+    std::size_t total_active = 1;
+    std::size_t total_future = 0;
+
     bool done = false;
-    bool future_non_empty = false;
     bool need_future_extract = false;
     bool need_second_extract = false;
 
     std::int64_t phase_ns = 0;
     std::uint64_t bucket_steps = 1;
-    std::uint64_t light_phases = 0;
+    std::uint64_t light_phases = 1;
 
     const auto t0 = std::chrono::steady_clock::now();
 
     std::uint32_t* cells_ptr = res.ff.cells.data();
+    const std::uint16_t* weights_ptr = g.weights.data();
+
+    // Seed target cell into active frontier
     cells_ptr[target] = FloodField::pack(0, -1);
-    active_bits.set_non_atomic(static_cast<std::uint32_t>(target));
+    const std::uint32_t target_w0 = static_cast<std::uint32_t>(target >> 6);
+    active_bits[target_w0] = 1ULL << (target & 63);
+    active_chunks[0].data.push_back(target_w0);
+    for (int t = 0; t < threads; ++t) {
+        active_offsets[t + 1] = 1;
+    }
+
+    auto build_offsets = [threads](const std::vector<AlignedBlockVec>& chunks,
+                                   std::vector<std::size_t>& offsets) -> std::size_t {
+        offsets[0] = 0;
+        for (int t = 0; t < threads; ++t) {
+            offsets[t + 1] = offsets[t] + chunks[t].data.size();
+        }
+        return offsets[threads];
+    };
 
     #pragma omp parallel num_threads(threads)
     {
@@ -187,226 +191,233 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 #endif
 
         while (true) {
-            #pragma omp single
-            {
-                ++light_phases;
-                if constexpr (RecordTrace) {
-                    const auto now = std::chrono::steady_clock::now();
-                    phase_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
-                }
-            }
+            std::uint64_t* const act_b = active_bits.data();
+            std::uint64_t* const nxt_b = next_bits.data();
+            std::uint64_t* const fut_b = future_bits.data();
+            auto& my_next = next_chunks[tid].data;
+            auto& my_future = future_chunks[tid].data;
 
-            bool my_next = false;
-            bool my_future = false;
             std::int64_t my_newly_reached = 0;
+            int src_t = 0;
 
-            #pragma omp for schedule(dynamic, 8)
-            for (std::size_t w1 = 0; w1 < num_l1; ++w1) {
-                std::uint64_t m1 = active_bits.l1[w1];
-                if (m1 == 0) {
+            #pragma omp for schedule(static, 8) nowait
+            for (std::size_t idx = 0; idx < total_active; ++idx) {
+                if (idx < active_offsets[src_t]) {
+                    src_t = 0;
+                }
+                while (idx >= active_offsets[src_t + 1]) {
+                    ++src_t;
+                }
+                const std::uint32_t w0 = active_chunks[src_t].data[idx - active_offsets[src_t]];
+
+                std::uint64_t m0 = act_b[w0];
+                if (m0 == 0ULL) {
                     continue;
                 }
-                active_bits.l1[w1] = 0;
+                act_b[w0] = 0ULL;
 
-                while (m1 != 0) {
-                    const int b1 = __builtin_ctzll(m1);
-                    m1 &= (m1 - 1);
-                    const std::size_t w0 = (w1 << 6) + static_cast<std::size_t>(b1);
-                    std::uint64_t m0 = active_bits.l0[w0];
-                    if (m0 == 0) {
+                const std::size_t base_u = static_cast<std::size_t>(w0) << 6;
+                const std::int64_t base_r = static_cast<std::int64_t>(base_u) / n;
+                const std::int64_t base_c = static_cast<std::int64_t>(base_u) % n;
+
+                while (m0 != 0ULL) {
+                    const int b0 = __builtin_ctzll(m0);
+                    m0 &= (m0 - 1);
+                    const std::uint32_t u = static_cast<std::uint32_t>(base_u + static_cast<std::size_t>(b0));
+
+                    const std::uint32_t packed_u = __atomic_load_n(&cells_ptr[u], __ATOMIC_RELAXED);
+                    const std::uint32_t d_u = FloodField::unpack_dist(packed_u);
+
+                    if (d_u < bucket_lower || d_u >= bucket_upper) {
                         continue;
                     }
-                    active_bits.l0[w0] = 0;
 
-                    while (m0 != 0) {
-                        const int b0 = __builtin_ctzll(m0);
-                        m0 &= (m0 - 1);
-                        const std::uint32_t u = static_cast<std::uint32_t>((w0 << 6) + static_cast<std::size_t>(b0));
+                    if constexpr (RecordTrace) {
+                        res.ff.settle_ns[u] = phase_ns;
+                    }
 
-                        const std::uint32_t packed_u = __atomic_load_n(&cells_ptr[u], __ATOMIC_RELAXED);
-                        const std::uint32_t d_u = FloodField::unpack_dist(packed_u);
+                    const std::uint32_t step_cost = static_cast<std::uint32_t>(weights_ptr[u]);
+                    std::int64_t r = base_r;
+                    std::int64_t c = base_c + b0;
+                    if (c >= n) {
+                        r += c / n;
+                        c %= n;
+                    }
 
-                        if (d_u < bucket_lower || d_u >= bucket_upper) {
+                    for (int dir_i = 0; dir_i < 4; ++dir_i) {
+                        const std::int64_t nr = r + DR[dir_i];
+                        const std::int64_t nc = c + DC[dir_i];
+                        if (nr < 0 || nr >= n || nc < 0 || nc >= n) {
+                            continue;
+                        }
+                        const std::uint32_t v = static_cast<std::uint32_t>(nr * n + nc);
+                        if (weights_ptr[v] == 0) {
                             continue;
                         }
 
-                        if constexpr (RecordTrace) {
-                            res.ff.settle_ns[u] = phase_ns;
+                        const std::uint32_t new_dist = d_u + step_cost;
+                        bool first_visit = false;
+                        if (atomic_relax_packed(&cells_ptr[v], new_dist, FLOW_TO_CURR[dir_i], first_visit)) {
+                            if (first_visit) {
+                                ++my_newly_reached;
+                            }
+                            if (new_dist < bucket_upper) {
+                                set_bit_and_track_block(nxt_b, v, my_next);
+                            } else {
+                                set_bit_and_track_block(fut_b, v, my_future);
+                            }
                         }
+                    }
+                }
+            }
 
-                        const std::uint32_t step_cost = static_cast<std::uint32_t>(g.weights[u]);
-                        const std::int64_t r = static_cast<std::int64_t>(u) / n;
-                        const std::int64_t c = static_cast<std::int64_t>(u) % n;
+            thread_stats[tid].reachable += my_newly_reached;
 
-                        for (int dir_i = 0; dir_i < 4; ++dir_i) {
-                            const std::int64_t nr = r + DR[dir_i];
-                            const std::int64_t nc = c + DC[dir_i];
-                            if (nr < 0 || nr >= n || nc < 0 || nc >= n) {
-                                continue;
-                            }
-                            const std::uint32_t v = static_cast<std::uint32_t>(nr * n + nc);
-                            if (g.weights[v] == 0) {
-                                continue;
-                            }
+            // Barrier #1: all active_bits cleared, all next/future block lists finalized
+            #pragma omp barrier
 
-                            const std::uint32_t new_dist = d_u + step_cost;
-                            bool first_visit = false;
-                            if (atomic_relax_packed(&cells_ptr[v], new_dist, FLOW_TO_CURR[dir_i], first_visit)) {
-                                if (first_visit) {
-                                    ++my_newly_reached;
-                                }
-                                if (new_dist < bucket_upper) {
-                                    next_bits.set_atomic(v);
-                                    my_next = true;
-                                } else {
-                                    future_bits.set_atomic(v);
-                                    my_future = true;
-                                }
-                            }
+            // Single + Barrier #2: swap frontier or advance bucket
+            #pragma omp single
+            {
+                const std::size_t total_next = build_offsets(next_chunks, active_offsets);
+                need_future_extract = false;
+
+                if (total_next > 0) {
+                    active_bits.swap(next_bits);
+                    active_chunks.swap(next_chunks);
+                    for (int t = 0; t < threads; ++t) {
+                        next_chunks[t].data.clear();
+                    }
+                    total_active = total_next;
+                    ++light_phases;
+                    if constexpr (RecordTrace) {
+                        const auto now = std::chrono::steady_clock::now();
+                        phase_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
+                    }
+                } else {
+                    total_future = build_offsets(future_chunks, future_offsets);
+                    if (total_future == 0) {
+                        done = true;
+                    } else if (delta >= max_w) {
+                        // O(1) swap: every pending future cell belongs to current_bucket + 1
+                        ++current_bucket;
+                        bucket_lower = current_bucket * delta;
+                        bucket_upper = bucket_lower + delta;
+                        active_bits.swap(future_bits);
+                        active_chunks.swap(future_chunks);
+                        active_offsets = future_offsets;
+                        total_active = total_future;
+                        for (int t = 0; t < threads; ++t) {
+                            future_chunks[t].data.clear();
+                        }
+                        ++bucket_steps;
+                        ++light_phases;
+                        if constexpr (RecordTrace) {
+                            const auto now = std::chrono::steady_clock::now();
+                            phase_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
+                        }
+                    } else {
+                        need_future_extract = true;
+                        cand_bucket = current_bucket + 1;
+                        cand_lower = cand_bucket * delta;
+                        cand_upper = cand_lower + delta;
+                        for (int t = 0; t < threads; ++t) {
+                            active_chunks[t].data.clear();
+                            rem_chunks[t].data.clear();
                         }
                     }
                 }
             } // implicit barrier
-
-            thread_state[tid].has_next = my_next;
-            thread_state[tid].has_future = my_future;
-            thread_state[tid].reachable += my_newly_reached;
-
-            #pragma omp barrier
-
-            #pragma omp single
-            {
-                bool any_next = false;
-                for (int t = 0; t < threads; ++t) {
-                    if (thread_state[t].has_next) {
-                        any_next = true;
-                    }
-                    if (thread_state[t].has_future) {
-                        future_non_empty = true;
-                    }
-                }
-
-                need_future_extract = false;
-                if (any_next) {
-                    active_bits.swap(next_bits);
-                } else if (!future_non_empty) {
-                    done = true;
-                } else if (delta >= max_w) {
-                    // O(1) swap: every pending cell in future_bits belongs to current_bucket + 1
-                    ++current_bucket;
-                    bucket_lower = current_bucket * delta;
-                    bucket_upper = bucket_lower + delta;
-                    active_bits.swap(future_bits);
-                    future_non_empty = false;
-                    ++bucket_steps;
-                } else {
-                    need_future_extract = true;
-                    cand_bucket = current_bucket + 1;
-                    cand_lower = cand_bucket * delta;
-                    cand_upper = cand_lower + delta;
-                }
-            }
 
             if (done) {
                 break;
             }
 
             if (need_future_extract) {
-                bool my_extracted = false;
-                bool my_rem_future = false;
+                std::uint64_t* const act_b2 = active_bits.data();
+                std::uint64_t* const fut_b2 = future_bits.data();
+                auto& my_act = active_chunks[tid].data;
+                auto& my_rem = rem_chunks[tid].data;
                 std::uint64_t my_min_b = INF_BUCKET;
+                int f_src_t = 0;
 
-                #pragma omp for schedule(dynamic, 8)
-                for (std::size_t w1 = 0; w1 < num_l1; ++w1) {
-                    std::uint64_t m1 = future_bits.l1[w1];
-                    if (m1 == 0) {
+                #pragma omp for schedule(static, 8) nowait
+                for (std::size_t idx = 0; idx < total_future; ++idx) {
+                    if (idx < future_offsets[f_src_t]) {
+                        f_src_t = 0;
+                    }
+                    while (idx >= future_offsets[f_src_t + 1]) {
+                        ++f_src_t;
+                    }
+                    const std::uint32_t w0 = future_chunks[f_src_t].data[idx - future_offsets[f_src_t]];
+
+                    std::uint64_t m0 = fut_b2[w0];
+                    if (m0 == 0ULL) {
                         continue;
                     }
 
-                    std::uint64_t new_future_m1 = 0;
-                    std::uint64_t new_active_m1 = 0;
+                    std::uint64_t rem_m0 = 0ULL;
+                    std::uint64_t act_m0 = 0ULL;
+                    const std::size_t base_u = static_cast<std::size_t>(w0) << 6;
 
-                    while (m1 != 0) {
-                        const int b1 = __builtin_ctzll(m1);
-                        m1 &= (m1 - 1);
-                        const std::size_t w0 = (w1 << 6) + static_cast<std::size_t>(b1);
-                        std::uint64_t m0 = future_bits.l0[w0];
-                        if (m0 == 0) {
-                            continue;
-                        }
+                    while (m0 != 0ULL) {
+                        const int b0 = __builtin_ctzll(m0);
+                        m0 &= (m0 - 1);
+                        const std::uint32_t v = static_cast<std::uint32_t>(base_u + static_cast<std::size_t>(b0));
+                        const std::uint32_t d_v = FloodField::unpack_dist(cells_ptr[v]);
 
-                        std::uint64_t rem_m0 = 0;
-                        std::uint64_t act_m0 = 0;
-
-                        while (m0 != 0) {
-                            const int b0 = __builtin_ctzll(m0);
-                            m0 &= (m0 - 1);
-                            const std::uint32_t v = static_cast<std::uint32_t>((w0 << 6) + static_cast<std::size_t>(b0));
-                            const std::uint32_t d_v = FloodField::unpack_dist(cells_ptr[v]);
-
-                            if (d_v < cand_lower) {
-                                continue; // Stale entry settled in an earlier bucket
-                            } else if (d_v < cand_upper) {
-                                act_m0 |= (1ULL << b0);
-                            } else {
-                                rem_m0 |= (1ULL << b0);
-                                const std::uint64_t b_v = static_cast<std::uint64_t>(d_v) / delta;
-                                if (b_v < my_min_b) {
-                                    my_min_b = b_v;
-                                }
+                        if (d_v < cand_lower) {
+                            continue; // Stale entry already settled in an earlier bucket
+                        } else if (d_v < cand_upper) {
+                            act_m0 |= (1ULL << b0);
+                        } else {
+                            rem_m0 |= (1ULL << b0);
+                            const std::uint64_t b_v = static_cast<std::uint64_t>(d_v) / delta;
+                            if (b_v < my_min_b) {
+                                my_min_b = b_v;
                             }
-                        }
-
-                        future_bits.l0[w0] = rem_m0;
-                        if (rem_m0 != 0) {
-                            new_future_m1 |= (1ULL << b1);
-                            my_rem_future = true;
-                        }
-                        if (act_m0 != 0) {
-                            active_bits.l0[w0] = act_m0;
-                            new_active_m1 |= (1ULL << b1);
-                            my_extracted = true;
                         }
                     }
 
-                    future_bits.l1[w1] = new_future_m1;
-                    if (new_active_m1 != 0) {
-                        active_bits.l1[w1] = new_active_m1;
+                    fut_b2[w0] = rem_m0;
+                    if (rem_m0 != 0ULL) {
+                        my_rem.push_back(w0);
+                    }
+                    if (act_m0 != 0ULL) {
+                        act_b2[w0] = act_m0;
+                        my_act.push_back(w0);
                     }
                 }
 
-                thread_state[tid].extracted = my_extracted;
-                thread_state[tid].rem_future = my_rem_future;
-                thread_state[tid].min_bucket = my_min_b;
+                thread_stats[tid].min_bucket = my_min_b;
 
                 #pragma omp barrier
 
                 #pragma omp single
                 {
-                    bool any_extracted = false;
-                    bool any_rem = false;
+                    future_chunks.swap(rem_chunks);
+                    total_active = build_offsets(active_chunks, active_offsets);
+                    total_future = build_offsets(future_chunks, future_offsets);
+
                     std::uint64_t global_min_b = INF_BUCKET;
                     for (int t = 0; t < threads; ++t) {
-                        if (thread_state[t].extracted) {
-                            any_extracted = true;
-                        }
-                        if (thread_state[t].rem_future) {
-                            any_rem = true;
-                        }
-                        if (thread_state[t].min_bucket < global_min_b) {
-                            global_min_b = thread_state[t].min_bucket;
+                        if (thread_stats[t].min_bucket < global_min_b) {
+                            global_min_b = thread_stats[t].min_bucket;
                         }
                     }
 
-                    future_non_empty = any_rem;
                     need_second_extract = false;
-
-                    if (any_extracted) {
+                    if (total_active > 0) {
                         current_bucket = cand_bucket;
                         bucket_lower = cand_lower;
                         bucket_upper = cand_upper;
                         ++bucket_steps;
-                    } else if (!any_rem || global_min_b == INF_BUCKET) {
+                        ++light_phases;
+                        if constexpr (RecordTrace) {
+                            const auto now = std::chrono::steady_clock::now();
+                            phase_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
+                        }
+                    } else if (total_future == 0 || global_min_b == INF_BUCKET) {
                         done = true;
                     } else {
                         current_bucket = global_min_b;
@@ -414,6 +425,10 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                         bucket_upper = bucket_lower + delta;
                         ++bucket_steps;
                         need_second_extract = true;
+                        for (int t = 0; t < threads; ++t) {
+                            active_chunks[t].data.clear();
+                            rem_chunks[t].data.clear();
+                        }
                     }
                 }
 
@@ -422,72 +437,73 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
                 }
 
                 if (need_second_extract) {
-                    bool my_rem2 = false;
+                    std::uint64_t* const act_b3 = active_bits.data();
+                    std::uint64_t* const fut_b3 = future_bits.data();
+                    auto& my_act2 = active_chunks[tid].data;
+                    auto& my_rem2 = rem_chunks[tid].data;
+                    int f_src_t2 = 0;
 
-                    #pragma omp for schedule(dynamic, 8)
-                    for (std::size_t w1 = 0; w1 < num_l1; ++w1) {
-                        std::uint64_t m1 = future_bits.l1[w1];
-                        if (m1 == 0) {
+                    #pragma omp for schedule(static, 8) nowait
+                    for (std::size_t idx = 0; idx < total_future; ++idx) {
+                        if (idx < future_offsets[f_src_t2]) {
+                            f_src_t2 = 0;
+                        }
+                        while (idx >= future_offsets[f_src_t2 + 1]) {
+                            ++f_src_t2;
+                        }
+                        const std::uint32_t w0 = future_chunks[f_src_t2].data[idx - future_offsets[f_src_t2]];
+
+                        std::uint64_t m0 = fut_b3[w0];
+                        if (m0 == 0ULL) {
                             continue;
                         }
 
-                        std::uint64_t new_future_m1 = 0;
-                        std::uint64_t new_active_m1 = 0;
+                        std::uint64_t rem_m0 = 0ULL;
+                        std::uint64_t act_m0 = 0ULL;
+                        const std::size_t base_u = static_cast<std::size_t>(w0) << 6;
 
-                        while (m1 != 0) {
-                            const int b1 = __builtin_ctzll(m1);
-                            m1 &= (m1 - 1);
-                            const std::size_t w0 = (w1 << 6) + static_cast<std::size_t>(b1);
-                            std::uint64_t m0 = future_bits.l0[w0];
-                            if (m0 == 0) {
-                                continue;
-                            }
+                        while (m0 != 0ULL) {
+                            const int b0 = __builtin_ctzll(m0);
+                            m0 &= (m0 - 1);
+                            const std::uint32_t v = static_cast<std::uint32_t>(base_u + static_cast<std::size_t>(b0));
+                            const std::uint32_t d_v = FloodField::unpack_dist(cells_ptr[v]);
 
-                            std::uint64_t rem_m0 = 0;
-                            std::uint64_t act_m0 = 0;
-
-                            while (m0 != 0) {
-                                const int b0 = __builtin_ctzll(m0);
-                                m0 &= (m0 - 1);
-                                const std::uint32_t v = static_cast<std::uint32_t>((w0 << 6) + static_cast<std::size_t>(b0));
-                                const std::uint32_t d_v = FloodField::unpack_dist(cells_ptr[v]);
-
-                                if (d_v < bucket_upper) {
-                                    act_m0 |= (1ULL << b0);
-                                } else {
-                                    rem_m0 |= (1ULL << b0);
-                                }
-                            }
-
-                            future_bits.l0[w0] = rem_m0;
-                            if (rem_m0 != 0) {
-                                new_future_m1 |= (1ULL << b1);
-                                my_rem2 = true;
-                            }
-                            if (act_m0 != 0) {
-                                active_bits.l0[w0] = act_m0;
-                                new_active_m1 |= (1ULL << b1);
+                            if (d_v < bucket_upper) {
+                                act_m0 |= (1ULL << b0);
+                            } else {
+                                rem_m0 |= (1ULL << b0);
                             }
                         }
 
-                        future_bits.l1[w1] = new_future_m1;
-                        if (new_active_m1 != 0) {
-                            active_bits.l1[w1] = new_active_m1;
+                        fut_b3[w0] = rem_m0;
+                        if (rem_m0 != 0ULL) {
+                            my_rem2.push_back(w0);
+                        }
+                        if (act_m0 != 0ULL) {
+                            act_b3[w0] = act_m0;
+                            my_act2.push_back(w0);
                         }
                     }
 
-                    thread_state[tid].rem_future = my_rem2;
                     #pragma omp barrier
 
                     #pragma omp single
                     {
-                        bool any_rem2 = false;
-                        for (int t = 0; t < threads; ++t) {
-                            if (thread_state[t].rem_future) {
-                                any_rem2 = true;
+                        future_chunks.swap(rem_chunks);
+                        total_active = build_offsets(active_chunks, active_offsets);
+                        if (total_active == 0) {
+                            done = true;
+                        } else {
+                            ++light_phases;
+                            if constexpr (RecordTrace) {
+                                const auto now = std::chrono::steady_clock::now();
+                                phase_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now - t0).count();
                             }
                         }
-                        future_non_empty = any_rem2;
+                    }
+
+                    if (done) {
+                        break;
                     }
                 }
             }
@@ -496,7 +512,7 @@ ParallelResult run_openmp_delta_stepping(const Graph& g, const ParallelConfig& c
 
     std::int64_t total_reachable = 0;
     for (int t = 0; t < threads; ++t) {
-        total_reachable += thread_state[t].reachable;
+        total_reachable += thread_stats[t].reachable;
     }
     res.ff.reachable_cells = total_reachable;
 
