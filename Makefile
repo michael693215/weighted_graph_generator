@@ -1,8 +1,9 @@
 CXX ?= g++
 MPICXX ?= mpicxx
 CXXFLAGS = -std=c++17 -O3
-SRCS = driver.cpp serial_dijkstra.cpp parallel_dijkstra.cpp graph.cpp
+SRCS = driver.cpp serial_dijkstra.cpp parallel_dijkstra.cpp graph.cpp game.cpp
 TARGET = driver
+RAYLIB_FLAGS = -lraylib -pthread
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
@@ -13,7 +14,7 @@ else
 endif
 
 all:
-	$(CXX) $(CXXFLAGS) $(OMP_FLAGS) -o $(TARGET) $(SRCS)
+	$(CXX) $(CXXFLAGS) $(OMP_FLAGS) $(RAYLIB_FLAGS) -o $(TARGET) $(SRCS)
 
 mpi:
 	$(MPICXX) $(CXXFLAGS) $(OMP_FLAGS) -DUSE_MPI -o $(TARGET) $(SRCS)

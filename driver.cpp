@@ -2,6 +2,7 @@
 #include "metrics.hpp"
 #include "parallel_dijkstra.hpp"
 #include "serial_dijkstra.hpp"
+#include "game.hpp"
 #include <algorithm>
 #include <cctype>
 #include <chrono>
@@ -141,6 +142,8 @@ int main(int argc, char* argv[]) {
     std::uint64_t delta = 0;
     int num_threads = 0;
     fs::path out_dir = "output";
+    bool do_game = false;
+    GameConfig gc;
 
     std::vector<std::string> pos_args;
     for (int i = 1; i < argc; ++i) {
@@ -166,6 +169,20 @@ int main(int argc, char* argv[]) {
             num_threads = std::stoi(arg.substr(10));
         } else if (arg.rfind("--out-dir=", 0) == 0) {
             out_dir = arg.substr(10);
+        // game loop
+        } else if (arg == "--game") {
+            do_game = true;
+        } else if (arg.rfind("--zombies=", 0) == 0) {
+            gc.max_zombies = std::stoi(arg.substr(10));
+        } else if (arg.rfind("--portals=", 0) == 0) {
+            gc.num_portals = std::stoi(arg.substr(10));
+        } else if (arg.rfind("--spawn=", 0) == 0) {
+            gc.spawns_per_tick = std::stoi(arg.substr(8));
+        } else if (arg.rfind("--tick-hz=", 0) == 0) {
+            gc.tick_hz = std::stoi(arg.substr(10));
+        } else if (arg.rfind("--fps=", 0) == 0) {
+            gc.fps_cap = std::stoi(arg.substr(6));
+        // end game loop
         } else {
             pos_args.push_back(arg);
         }
@@ -179,6 +196,27 @@ int main(int argc, char* argv[]) {
 
     // 1. Generate deterministic terrain map (identical across all MPI ranks via seed)
     Graph g(n, w_max, k, obstacle_d, seed);
+
+    if (do_game) {
+        int rc = 0;
+        if (mode == SOLVER_MODE::MPI_SOLVER) {
+            if (rank == 0) std::cerr << "--game does not support --mpi (use --dijkstra, --dial or --omp)\n";
+            rc = 1;
+        } else if (rank == 0) {
+            gc.use_parallel = (mode == SOLVER_MODE::OMP);
+            gc.serial_algo = (mode == SOLVER_MODE::DIAL) ? ALGORITHM::DIAL : ALGORITHM::DIJKSTRA;
+            gc.parallel.backend = PARALLEL_BACKEND::OPENMP;
+            gc.parallel.delta = delta;
+            gc.parallel.num_threads = num_threads;
+            gc.algo_label = mode_name(mode);
+            gc.seed = seed;
+            rc = run_game(g, gc);
+        }
+    #ifdef USE_MPI
+        MPI_Finalize();
+    #endif
+        return rc;
+    }
 
     if (mode == SOLVER_MODE::DIJKSTRA || mode == SOLVER_MODE::DIAL) {
         if (rank == 0) {
