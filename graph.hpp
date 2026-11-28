@@ -25,6 +25,6 @@ struct Graph {
     // obstacle_d: obstacle density; ratio of 0s in a graph. 
     // seed: seed for the prng (pseudo-random number generator). helpful for generating the same graphs over different systems.
     Graph(std::int64_t _n, std::int64_t _w_max, int _k = 0, float _obstacle_d = 0, std::uint64_t _seed = 1, std::int64_t _w_min = 1);
-    std::vector<std::uint32_t> weights;
+    std::vector<std::uint16_t> weights;
 };
 #endif

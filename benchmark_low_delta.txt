@@ -1,0 +1,1704 @@
+=== Flood Field Benchmark ===
+Algorithm      : Serial Dial
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Duration       : 15.76 ms
+Peak RSS       : 24.53 MB
+CPU Load       : 1.00 eff. cores (99.97% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 100
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 579 (light phases: 3731)
+Duration       : 24.09 ms
+Peak RSS       : 25.23 MB
+CPU Load       : 1.04 eff. cores (104.38% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 100
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 579 (light phases: 3730)
+Duration       : 57.61 ms
+Peak RSS       : 25.30 MB
+CPU Load       : 1.36 eff. cores (68.14% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 100
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 579 (light phases: 3732)
+Duration       : 66.28 ms
+Peak RSS       : 25.39 MB
+CPU Load       : 1.66 eff. cores (55.24% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 100
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 579 (light phases: 3734)
+Duration       : 77.67 ms
+Peak RSS       : 25.41 MB
+CPU Load       : 1.90 eff. cores (47.60% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 100
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 579 (light phases: 3729)
+Duration       : 99.82 ms
+Peak RSS       : 25.47 MB
+CPU Load       : 1.83 eff. cores (36.55% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 100
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 579 (light phases: 3731)
+Duration       : 134.77 ms
+Peak RSS       : 25.45 MB
+CPU Load       : 1.98 eff. cores (33.04% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 100
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 579 (light phases: 3733)
+Duration       : 154.11 ms
+Peak RSS       : 25.42 MB
+CPU Load       : 2.11 eff. cores (30.17% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 100
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 579 (light phases: 3734)
+Duration       : 167.30 ms
+Peak RSS       : 25.53 MB
+CPU Load       : 2.27 eff. cores (28.37% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 250
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 232 (light phases: 2743)
+Duration       : 25.40 ms
+Peak RSS       : 25.27 MB
+CPU Load       : 1.04 eff. cores (104.16% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 250
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 232 (light phases: 2741)
+Duration       : 47.62 ms
+Peak RSS       : 25.31 MB
+CPU Load       : 1.42 eff. cores (71.14% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 250
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 232 (light phases: 2743)
+Duration       : 49.82 ms
+Peak RSS       : 25.44 MB
+CPU Load       : 1.60 eff. cores (53.34% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 250
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 232 (light phases: 2738)
+Duration       : 56.10 ms
+Peak RSS       : 25.33 MB
+CPU Load       : 1.77 eff. cores (44.15% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 250
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 232 (light phases: 2743)
+Duration       : 79.04 ms
+Peak RSS       : 25.47 MB
+CPU Load       : 1.79 eff. cores (35.90% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 250
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 232 (light phases: 2740)
+Duration       : 100.60 ms
+Peak RSS       : 25.45 MB
+CPU Load       : 2.04 eff. cores (33.93% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 250
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 232 (light phases: 2737)
+Duration       : 116.27 ms
+Peak RSS       : 25.47 MB
+CPU Load       : 2.17 eff. cores (31.00% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 250
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 232 (light phases: 2743)
+Duration       : 122.56 ms
+Peak RSS       : 25.47 MB
+CPU Load       : 2.38 eff. cores (29.77% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 500
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 116 (light phases: 2329)
+Duration       : 26.97 ms
+Peak RSS       : 25.25 MB
+CPU Load       : 1.04 eff. cores (104.18% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 500
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 116 (light phases: 2329)
+Duration       : 45.30 ms
+Peak RSS       : 25.33 MB
+CPU Load       : 1.47 eff. cores (73.34% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 500
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 116 (light phases: 2331)
+Duration       : 45.70 ms
+Peak RSS       : 25.34 MB
+CPU Load       : 1.68 eff. cores (55.85% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 500
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 116 (light phases: 2334)
+Duration       : 48.68 ms
+Peak RSS       : 25.34 MB
+CPU Load       : 1.86 eff. cores (46.61% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 500
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 116 (light phases: 2329)
+Duration       : 65.77 ms
+Peak RSS       : 25.41 MB
+CPU Load       : 1.84 eff. cores (36.79% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 500
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 116 (light phases: 2331)
+Duration       : 80.33 ms
+Peak RSS       : 25.45 MB
+CPU Load       : 2.13 eff. cores (35.51% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 500
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 116 (light phases: 2333)
+Duration       : 89.85 ms
+Peak RSS       : 25.48 MB
+CPU Load       : 2.30 eff. cores (32.79% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 500
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 116 (light phases: 2330)
+Duration       : 100.07 ms
+Peak RSS       : 25.45 MB
+CPU Load       : 2.48 eff. cores (31.02% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 1000
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 58 (light phases: 2077)
+Duration       : 29.87 ms
+Peak RSS       : 25.31 MB
+CPU Load       : 1.04 eff. cores (103.59% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 1000
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 58 (light phases: 2076)
+Duration       : 45.15 ms
+Peak RSS       : 25.31 MB
+CPU Load       : 1.51 eff. cores (75.67% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 1000
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 58 (light phases: 2076)
+Duration       : 43.09 ms
+Peak RSS       : 25.33 MB
+CPU Load       : 1.73 eff. cores (57.73% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 1000
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 58 (light phases: 2074)
+Duration       : 45.75 ms
+Peak RSS       : 25.45 MB
+CPU Load       : 1.93 eff. cores (48.34% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 1000
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 58 (light phases: 2075)
+Duration       : 61.74 ms
+Peak RSS       : 25.38 MB
+CPU Load       : 1.90 eff. cores (37.95% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 1000
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 58 (light phases: 2075)
+Duration       : 75.70 ms
+Peak RSS       : 25.38 MB
+CPU Load       : 2.16 eff. cores (36.03% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 1000
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 58 (light phases: 2072)
+Duration       : 87.55 ms
+Peak RSS       : 25.62 MB
+CPU Load       : 2.31 eff. cores (33.01% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 1000
+Grid size      : 1000 x 1000 (1000000 cells)
+Target cell    : 755155 (row 755, col 155)
+Obstacle ratio : 0.25
+Reachable cells: 744733 / 1000000
+Bucket steps   : 58 (light phases: 2073)
+Duration       : 93.84 ms
+Peak RSS       : 25.47 MB
+CPU Load       : 2.47 eff. cores (30.93% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : Serial Dial
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Duration       : 66.79 ms
+Peak RSS       : 41.67 MB
+CPU Load       : 1.00 eff. cores (99.88% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 100
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 1030 (light phases: 7202)
+Duration       : 103.55 ms
+Peak RSS       : 43.56 MB
+CPU Load       : 1.02 eff. cores (102.32% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 100
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 1030 (light phases: 7202)
+Duration       : 146.35 ms
+Peak RSS       : 43.66 MB
+CPU Load       : 1.50 eff. cores (75.22% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 100
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 1030 (light phases: 7198)
+Duration       : 143.21 ms
+Peak RSS       : 43.61 MB
+CPU Load       : 1.75 eff. cores (58.19% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 100
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 1030 (light phases: 7200)
+Duration       : 155.74 ms
+Peak RSS       : 43.66 MB
+CPU Load       : 1.94 eff. cores (48.40% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 100
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 1030 (light phases: 7203)
+Duration       : 211.97 ms
+Peak RSS       : 43.75 MB
+CPU Load       : 1.88 eff. cores (37.57% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 100
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 1030 (light phases: 7205)
+Duration       : 256.79 ms
+Peak RSS       : 43.77 MB
+CPU Load       : 2.18 eff. cores (36.29% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 100
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 1030 (light phases: 7200)
+Duration       : 355.63 ms
+Peak RSS       : 43.80 MB
+CPU Load       : 2.23 eff. cores (31.84% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 100
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 1030 (light phases: 7207)
+Duration       : 338.44 ms
+Peak RSS       : 43.72 MB
+CPU Load       : 2.46 eff. cores (30.74% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 250
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 412 (light phases: 5217)
+Duration       : 104.36 ms
+Peak RSS       : 43.53 MB
+CPU Load       : 1.03 eff. cores (103.42% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 250
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 412 (light phases: 5216)
+Duration       : 133.35 ms
+Peak RSS       : 43.59 MB
+CPU Load       : 1.52 eff. cores (75.95% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 250
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 412 (light phases: 5218)
+Duration       : 121.12 ms
+Peak RSS       : 43.66 MB
+CPU Load       : 1.87 eff. cores (62.33% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 250
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 412 (light phases: 5216)
+Duration       : 129.49 ms
+Peak RSS       : 43.69 MB
+CPU Load       : 2.04 eff. cores (51.11% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 250
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 412 (light phases: 5213)
+Duration       : 178.62 ms
+Peak RSS       : 43.77 MB
+CPU Load       : 2.00 eff. cores (39.98% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 250
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 412 (light phases: 5216)
+Duration       : 220.57 ms
+Peak RSS       : 43.69 MB
+CPU Load       : 2.20 eff. cores (36.64% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 250
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 412 (light phases: 5215)
+Duration       : 239.55 ms
+Peak RSS       : 43.77 MB
+CPU Load       : 2.33 eff. cores (33.23% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 250
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 412 (light phases: 5216)
+Duration       : 251.45 ms
+Peak RSS       : 43.80 MB
+CPU Load       : 2.55 eff. cores (31.88% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 500
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 206 (light phases: 4338)
+Duration       : 108.75 ms
+Peak RSS       : 43.56 MB
+CPU Load       : 1.02 eff. cores (102.29% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 500
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 206 (light phases: 4331)
+Duration       : 122.19 ms
+Peak RSS       : 43.58 MB
+CPU Load       : 1.62 eff. cores (81.00% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 500
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 206 (light phases: 4338)
+Duration       : 110.48 ms
+Peak RSS       : 43.66 MB
+CPU Load       : 1.97 eff. cores (65.61% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 500
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 206 (light phases: 4332)
+Duration       : 111.37 ms
+Peak RSS       : 43.62 MB
+CPU Load       : 2.23 eff. cores (55.87% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 500
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 206 (light phases: 4332)
+Duration       : 157.25 ms
+Peak RSS       : 43.62 MB
+CPU Load       : 2.11 eff. cores (42.19% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 500
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 206 (light phases: 4339)
+Duration       : 188.24 ms
+Peak RSS       : 43.69 MB
+CPU Load       : 2.26 eff. cores (37.69% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 500
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 206 (light phases: 4336)
+Duration       : 205.37 ms
+Peak RSS       : 43.73 MB
+CPU Load       : 2.39 eff. cores (34.21% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 500
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 206 (light phases: 4335)
+Duration       : 213.19 ms
+Peak RSS       : 43.73 MB
+CPU Load       : 2.62 eff. cores (32.78% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 1000
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 103 (light phases: 3851)
+Duration       : 123.03 ms
+Peak RSS       : 43.48 MB
+CPU Load       : 1.02 eff. cores (101.96% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 1000
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 103 (light phases: 3847)
+Duration       : 126.88 ms
+Peak RSS       : 43.53 MB
+CPU Load       : 1.67 eff. cores (83.49% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 1000
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 103 (light phases: 3845)
+Duration       : 110.61 ms
+Peak RSS       : 43.61 MB
+CPU Load       : 2.06 eff. cores (68.68% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 1000
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 103 (light phases: 3847)
+Duration       : 108.15 ms
+Peak RSS       : 43.53 MB
+CPU Load       : 2.36 eff. cores (58.94% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 1000
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 103 (light phases: 3848)
+Duration       : 152.85 ms
+Peak RSS       : 43.72 MB
+CPU Load       : 2.20 eff. cores (43.96% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 1000
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 103 (light phases: 3849)
+Duration       : 177.88 ms
+Peak RSS       : 43.73 MB
+CPU Load       : 2.36 eff. cores (39.30% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 1000
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 103 (light phases: 3850)
+Duration       : 190.87 ms
+Peak RSS       : 43.73 MB
+CPU Load       : 2.49 eff. cores (35.57% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 1000
+Grid size      : 2000 x 2000 (4000000 cells)
+Target cell    : 3020622 (row 1510, col 622)
+Obstacle ratio : 0.25
+Reachable cells: 2981376 / 4000000
+Bucket steps   : 103 (light phases: 3848)
+Duration       : 196.39 ms
+Peak RSS       : 43.75 MB
+CPU Load       : 2.72 eff. cores (33.96% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : Serial Dial
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Duration       : 278.89 ms
+Peak RSS       : 110.53 MB
+CPU Load       : 1.00 eff. cores (99.89% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 100
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 1949 (light phases: 14470)
+Duration       : 423.03 ms
+Peak RSS       : 116.61 MB
+CPU Load       : 1.02 eff. cores (101.99% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 100
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 1949 (light phases: 14468)
+Duration       : 432.54 ms
+Peak RSS       : 116.66 MB
+CPU Load       : 1.65 eff. cores (82.61% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 100
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 1949 (light phases: 14477)
+Duration       : 392.45 ms
+Peak RSS       : 116.61 MB
+CPU Load       : 2.05 eff. cores (68.44% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 100
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 1949 (light phases: 14472)
+Duration       : 385.81 ms
+Peak RSS       : 116.67 MB
+CPU Load       : 2.29 eff. cores (57.35% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 100
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 1949 (light phases: 14467)
+Duration       : 543.07 ms
+Peak RSS       : 116.77 MB
+CPU Load       : 2.14 eff. cores (42.89% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 100
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 1949 (light phases: 14477)
+Duration       : 656.75 ms
+Peak RSS       : 116.77 MB
+CPU Load       : 2.28 eff. cores (37.95% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 100
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 1949 (light phases: 14477)
+Duration       : 711.03 ms
+Peak RSS       : 116.86 MB
+CPU Load       : 2.43 eff. cores (34.74% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 100
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 1949 (light phases: 14477)
+Duration       : 734.70 ms
+Peak RSS       : 116.75 MB
+CPU Load       : 2.66 eff. cores (33.25% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 250
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 780 (light phases: 10325)
+Duration       : 420.39 ms
+Peak RSS       : 116.61 MB
+CPU Load       : 1.02 eff. cores (101.88% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 250
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 780 (light phases: 10325)
+Duration       : 393.67 ms
+Peak RSS       : 116.55 MB
+CPU Load       : 1.72 eff. cores (85.76% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 250
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 780 (light phases: 10308)
+Duration       : 334.33 ms
+Peak RSS       : 116.73 MB
+CPU Load       : 2.18 eff. cores (72.69% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 250
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 780 (light phases: 10316)
+Duration       : 318.97 ms
+Peak RSS       : 116.73 MB
+CPU Load       : 2.51 eff. cores (62.86% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 250
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 780 (light phases: 10310)
+Duration       : 445.04 ms
+Peak RSS       : 116.84 MB
+CPU Load       : 2.33 eff. cores (46.62% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 250
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 780 (light phases: 10307)
+Duration       : 514.81 ms
+Peak RSS       : 116.70 MB
+CPU Load       : 2.47 eff. cores (41.12% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 250
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 780 (light phases: 10309)
+Duration       : 549.99 ms
+Peak RSS       : 116.75 MB
+CPU Load       : 2.57 eff. cores (36.72% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 250
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 780 (light phases: 10313)
+Duration       : 564.09 ms
+Peak RSS       : 116.80 MB
+CPU Load       : 2.82 eff. cores (35.27% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 500
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 390 (light phases: 8561)
+Duration       : 450.77 ms
+Peak RSS       : 116.64 MB
+CPU Load       : 1.02 eff. cores (101.76% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 500
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 390 (light phases: 8547)
+Duration       : 390.06 ms
+Peak RSS       : 116.67 MB
+CPU Load       : 1.75 eff. cores (87.32% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 500
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 390 (light phases: 8541)
+Duration       : 322.92 ms
+Peak RSS       : 116.69 MB
+CPU Load       : 2.27 eff. cores (75.81% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 500
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 390 (light phases: 8538)
+Duration       : 299.29 ms
+Peak RSS       : 116.62 MB
+CPU Load       : 2.66 eff. cores (66.49% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 500
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 390 (light phases: 8546)
+Duration       : 413.62 ms
+Peak RSS       : 116.67 MB
+CPU Load       : 2.45 eff. cores (49.04% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 500
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 390 (light phases: 8536)
+Duration       : 468.41 ms
+Peak RSS       : 116.84 MB
+CPU Load       : 2.57 eff. cores (42.87% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 500
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 390 (light phases: 8534)
+Duration       : 489.91 ms
+Peak RSS       : 116.86 MB
+CPU Load       : 2.69 eff. cores (38.48% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 500
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 390 (light phases: 8539)
+Duration       : 494.19 ms
+Peak RSS       : 116.88 MB
+CPU Load       : 2.93 eff. cores (36.62% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 1000
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 196 (light phases: 7519)
+Duration       : 491.69 ms
+Peak RSS       : 116.52 MB
+CPU Load       : 1.02 eff. cores (101.60% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 1000
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 196 (light phases: 7513)
+Duration       : 414.50 ms
+Peak RSS       : 116.61 MB
+CPU Load       : 1.78 eff. cores (88.83% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 1000
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 196 (light phases: 7512)
+Duration       : 332.11 ms
+Peak RSS       : 116.67 MB
+CPU Load       : 2.35 eff. cores (78.30% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 1000
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 196 (light phases: 7505)
+Duration       : 302.83 ms
+Peak RSS       : 116.66 MB
+CPU Load       : 2.80 eff. cores (70.01% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 1000
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 196 (light phases: 7507)
+Duration       : 411.66 ms
+Peak RSS       : 116.75 MB
+CPU Load       : 2.56 eff. cores (51.26% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 1000
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 196 (light phases: 7509)
+Duration       : 452.98 ms
+Peak RSS       : 116.78 MB
+CPU Load       : 2.67 eff. cores (44.50% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 1000
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 195 (light phases: 7499)
+Duration       : 473.19 ms
+Peak RSS       : 116.77 MB
+CPU Load       : 2.83 eff. cores (40.36% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 1000
+Grid size      : 4000 x 4000 (16000000 cells)
+Target cell    : 12082488 (row 3020, col 2488)
+Obstacle ratio : 0.25
+Reachable cells: 11927752 / 16000000
+Bucket steps   : 196 (light phases: 7509)
+Duration       : 471.65 ms
+Peak RSS       : 116.84 MB
+CPU Load       : 3.06 eff. cores (38.28% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : Serial Dial
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Duration       : 1.22 s
+Peak RSS       : 385.41 MB
+CPU Load       : 1.00 eff. cores (99.86% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 100
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 4238 (light phases: 33107)
+Duration       : 1.84 s
+Peak RSS       : 408.45 MB
+CPU Load       : 1.02 eff. cores (101.60% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 100
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 4238 (light phases: 33116)
+Duration       : 1.52 s
+Peak RSS       : 408.47 MB
+CPU Load       : 1.77 eff. cores (88.49% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 100
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 4238 (light phases: 33108)
+Duration       : 1.23 s
+Peak RSS       : 408.75 MB
+CPU Load       : 2.29 eff. cores (76.38% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 100
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 4238 (light phases: 33105)
+Duration       : 1.18 s
+Peak RSS       : 408.59 MB
+CPU Load       : 2.68 eff. cores (66.97% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 100
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 4238 (light phases: 33101)
+Duration       : 1.59 s
+Peak RSS       : 408.62 MB
+CPU Load       : 2.44 eff. cores (48.81% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 100
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 4238 (light phases: 33115)
+Duration       : 1.81 s
+Peak RSS       : 408.72 MB
+CPU Load       : 2.56 eff. cores (42.61% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 100
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 4238 (light phases: 33103)
+Duration       : 1.90 s
+Peak RSS       : 408.70 MB
+CPU Load       : 2.69 eff. cores (38.46% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 100
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 4238 (light phases: 33106)
+Duration       : 1.93 s
+Peak RSS       : 408.69 MB
+CPU Load       : 2.93 eff. cores (36.57% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 250
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 1696 (light phases: 23350)
+Duration       : 1.84 s
+Peak RSS       : 408.48 MB
+CPU Load       : 1.02 eff. cores (101.64% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 250
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 1696 (light phases: 23343)
+Duration       : 1.38 s
+Peak RSS       : 408.50 MB
+CPU Load       : 1.81 eff. cores (90.69% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 250
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 1696 (light phases: 23337)
+Duration       : 1.13 s
+Peak RSS       : 408.64 MB
+CPU Load       : 2.43 eff. cores (80.96% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 250
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 1696 (light phases: 23346)
+Duration       : 1.03 s
+Peak RSS       : 408.52 MB
+CPU Load       : 2.90 eff. cores (72.41% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 250
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 1696 (light phases: 23332)
+Duration       : 1.37 s
+Peak RSS       : 408.67 MB
+CPU Load       : 2.63 eff. cores (52.60% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 250
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 1696 (light phases: 23337)
+Duration       : 1.53 s
+Peak RSS       : 408.69 MB
+CPU Load       : 2.73 eff. cores (45.53% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 250
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 1696 (light phases: 23338)
+Duration       : 1.54 s
+Peak RSS       : 408.73 MB
+CPU Load       : 2.86 eff. cores (40.83% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 250
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 1696 (light phases: 23341)
+Duration       : 1.54 s
+Peak RSS       : 408.67 MB
+CPU Load       : 3.10 eff. cores (38.76% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 500
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 848 (light phases: 19210)
+Duration       : 1.90 s
+Peak RSS       : 408.45 MB
+CPU Load       : 1.01 eff. cores (101.50% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 500
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 848 (light phases: 19200)
+Duration       : 1.38 s
+Peak RSS       : 408.47 MB
+CPU Load       : 1.84 eff. cores (91.77% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 500
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 848 (light phases: 19200)
+Duration       : 1.11 s
+Peak RSS       : 408.73 MB
+CPU Load       : 2.51 eff. cores (83.53% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 500
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 848 (light phases: 19200)
+Duration       : 1.01 s
+Peak RSS       : 408.56 MB
+CPU Load       : 3.03 eff. cores (75.68% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 500
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 848 (light phases: 19199)
+Duration       : 1.30 s
+Peak RSS       : 408.64 MB
+CPU Load       : 2.75 eff. cores (54.96% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 500
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 848 (light phases: 19199)
+Duration       : 1.40 s
+Peak RSS       : 408.77 MB
+CPU Load       : 2.83 eff. cores (47.20% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 500
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 848 (light phases: 19199)
+Duration       : 1.42 s
+Peak RSS       : 408.69 MB
+CPU Load       : 2.98 eff. cores (42.64% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 500
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 848 (light phases: 19202)
+Duration       : 1.43 s
+Peak RSS       : 408.78 MB
+CPU Load       : 3.27 eff. cores (40.89% of 8)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 1
+Delta (bucket) : 1000
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 424 (light phases: 16618)
+Duration       : 2.06 s
+Peak RSS       : 408.45 MB
+CPU Load       : 1.01 eff. cores (101.42% of 1)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 2
+Delta (bucket) : 1000
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 424 (light phases: 16607)
+Duration       : 1.48 s
+Peak RSS       : 408.62 MB
+CPU Load       : 1.86 eff. cores (92.92% of 2)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 3
+Delta (bucket) : 1000
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 424 (light phases: 16608)
+Duration       : 1.19 s
+Peak RSS       : 408.59 MB
+CPU Load       : 2.58 eff. cores (85.95% of 3)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 4
+Delta (bucket) : 1000
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 424 (light phases: 16613)
+Duration       : 1.03 s
+Peak RSS       : 408.48 MB
+CPU Load       : 3.12 eff. cores (77.96% of 4)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 5
+Delta (bucket) : 1000
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 424 (light phases: 16606)
+Duration       : 1.32 s
+Peak RSS       : 408.67 MB
+CPU Load       : 2.87 eff. cores (57.39% of 5)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 6
+Delta (bucket) : 1000
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 424 (light phases: 16605)
+Duration       : 1.40 s
+Peak RSS       : 408.73 MB
+CPU Load       : 2.95 eff. cores (49.12% of 6)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 7
+Delta (bucket) : 1000
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 424 (light phases: 16608)
+Duration       : 1.45 s
+Peak RSS       : 408.83 MB
+CPU Load       : 3.12 eff. cores (44.53% of 7)
+Verification   : PASS (Bellman optimality + flow verified)
+=== Flood Field Benchmark ===
+Algorithm      : OpenMP Delta-Stepping
+Workers        : 8
+Delta (bucket) : 1000
+Grid size      : 8000 x 8000 (64000000 cells)
+Target cell    : 48329954 (row 6041, col 1954)
+Obstacle ratio : 0.25
+Reachable cells: 47710055 / 64000000
+Bucket steps   : 424 (light phases: 16602)
+Duration       : 1.41 s
+Peak RSS       : 408.73 MB
+CPU Load       : 3.40 eff. cores (42.50% of 8)
+Verification   : PASS (Bellman optimality + flow verified)

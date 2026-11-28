@@ -6,6 +6,7 @@ __pycache__/
 # Compiled C++ executables
 driver
 exec
+.DS_Store
 
 # All generated benchmark CSVs, images, and animations
 output/
