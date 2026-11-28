@@ -163,6 +163,15 @@ python animate.py \
 
 ```
 
+**Run zombies simulation:**
+
+```bash
+./driver 60 100 0 0.20 42 [--dijkstra | --dial | --omp --threads=7] --game --zombies=1000 --portals=12 
+
+```
+
+Note: For ```--omp```, leave 1 thread to handle the game loop (eg. ```--threads=7``` will use 1 thread for the game loop, and 7 for the algorithm).
+
 ```
 
 *(Quick verification after running `brew install libomp open-mpi` and `make`: run `./driver 500 100 0 0.20 --omp --threads=4` and confirm the output prints `Workers        : 4` and `Verification   : PASS`.)*
